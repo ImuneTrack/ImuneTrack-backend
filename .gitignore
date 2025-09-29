@@ -1,0 +1,43 @@
+# Bytecode do Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+
+# Empacotamento Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+
+# Ambientes virtuais
+venv/
+env/
+.env/
+
+# IDEs e editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Arquivos do Docker
+*.dockerignore
+docker-compose.override.yml
+**/Dockerfile*
+
+# Dumps do PostgreSQL
+*.sql
+*.dump
+
+# Diversos
+*.sqlite3
+*.db
+*.DS_Store
+*.swp
+*.tmp
