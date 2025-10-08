@@ -1,5 +1,3 @@
-"""Configuração da conexão com o banco de dados usando SQLAlchemy."""
-
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
