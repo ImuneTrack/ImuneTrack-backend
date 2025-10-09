@@ -1,48 +1,180 @@
+from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.Usuario.model import Usuario
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
+from passlib.context import CryptContext
+import re
+from app.Usuario.model import Usuario  # ← Import correto do model
 
-def listar_usuarios(db: Session):
-    return db.query(Usuario).all()
 
-def buscar_usuario_por_id(db: Session, usuario_id: int):
-    return db.query(Usuario).filter(Usuario.id == usuario_id).first()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def adicionar_usuario(db: Session, nome: str, email: str, senha: str):
-    novo_usuario = Usuario(nome=nome, email=email, senha=senha)
-    db.add(novo_usuario)
-    db.commit()
-    db.refresh(novo_usuario)
-    return {
-        "id": novo_usuario.id,
-        "nome": novo_usuario.nome,
-        "email": novo_usuario.email
-    }
 
-def atualizar_usuario(db: Session, usuario_id: int, nome: str = None, email: str = None, senha: str = None):
-    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
-    if not usuario:
-        return None
-    
-    if nome:
-        usuario.nome = nome
-    if email:
-        usuario.email = email
-    if senha:
-        usuario.senha = senha
-    
-    db.commit()
-    db.refresh(usuario)
-    return {
-        "id": usuario.id,
-        "nome": usuario.nome,
-        "email": usuario.email
-    }
+class UsuarioController:
+    """Controlador para operações CRUD de Usuario."""
 
-def deletar_usuario(db: Session, usuario_id: int):
-    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
-    if not usuario:
-        return None
-    
-    db.delete(usuario)
-    db.commit()
-    return {"mensagem": f"Usuário {usuario.nome} removido com sucesso"}
+    @staticmethod
+    def _hash_senha(senha: str) -> str:
+        """Gera hash da senha usando bcrypt."""
+        return pwd_context.hash(senha)
+
+    @staticmethod
+    def _verificar_senha(senha: str, senha_hash: str) -> bool:
+        """Verifica se a senha corresponde ao hash."""
+        return pwd_context.verify(senha, senha_hash)
+
+    @staticmethod
+    def _validar_email(email: str) -> bool:
+        """Valida formato do email."""
+        padrao = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return re.match(padrao, email) is not None
+
+    @staticmethod
+    def _validar_senha(senha: str) -> bool:
+        """Valida força da senha."""
+        return len(senha) >= 6
+
+    @staticmethod
+    def listar_todos(db: Session) -> List[Usuario]:
+        """Retorna todos os usuários cadastrados."""
+        return db.query(Usuario).all()
+
+    @staticmethod
+    def buscar_por_id(db: Session, usuario_id: int) -> Optional[Usuario]:
+        """Busca um usuário por ID."""
+        return db.query(Usuario).filter(Usuario.id == usuario_id).first()
+
+    @staticmethod
+    def buscar_por_email(db: Session, email: str) -> Optional[Usuario]:
+        """Busca um usuário por email."""
+        return db.query(Usuario).filter(Usuario.email == email).first()
+
+    @staticmethod
+    def criar(db: Session, nome: str, email: str, senha: str) -> Usuario:
+        """Cria um novo usuário com validações e senha hasheada."""
+        # Validações
+        if not nome or len(nome.strip()) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nome é obrigatório"
+            )
+
+        if not UsuarioController._validar_email(email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email inválido"
+            )
+
+        if not UsuarioController._validar_senha(senha):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Senha deve ter no mínimo 6 caracteres"
+            )
+
+        # Verifica duplicidade de email
+        if UsuarioController.buscar_por_email(db, email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Usuário com email '{email}' já existe"
+            )
+
+        # Cria usuário com senha hasheada
+        senha_hash = UsuarioController._hash_senha(senha)
+        usuario = Usuario(nome=nome.strip(), email=email.lower(), senha=senha_hash)
+
+        try:
+            db.add(usuario)
+            db.commit()
+            db.refresh(usuario)
+            return usuario
+        except IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erro ao criar usuário"
+            ) from e
+
+    @staticmethod
+    def atualizar(
+        db: Session,
+        usuario_id: int,
+        nome: Optional[str] = None,
+        email: Optional[str] = None,
+        senha: Optional[str] = None
+    ) -> Usuario:
+        """Atualiza um usuário existente."""
+        usuario = UsuarioController.buscar_por_id(db, usuario_id)
+        if not usuario:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuário com ID {usuario_id} não encontrado"
+            )
+
+        # Valida e atualiza nome
+        if nome is not None:
+            if len(nome.strip()) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Nome não pode ser vazio"
+                )
+            usuario.nome = nome.strip()
+
+        # Valida e atualiza email
+        if email is not None:
+            if not UsuarioController._validar_email(email):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email inválido"
+                )
+            # Verifica se email já está em uso por outro usuário
+            usuario_existente = UsuarioController.buscar_por_email(db, email)
+            if usuario_existente and usuario_existente.id != usuario_id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Email '{email}' já está em uso"
+                )
+            usuario.email = email.lower()
+
+        # Valida e atualiza senha
+        if senha is not None:
+            if not UsuarioController._validar_senha(senha):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Senha deve ter no mínimo 6 caracteres"
+                )
+            usuario.senha = UsuarioController._hash_senha(senha)
+
+        try:
+            db.commit()
+            db.refresh(usuario)
+            return usuario
+        except IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Erro ao atualizar usuário"
+            ) from e
+
+    @staticmethod
+    def deletar(db: Session, usuario_id: int) -> bool:
+        """Deleta um usuário."""
+        usuario = UsuarioController.buscar_por_id(db, usuario_id)
+        if not usuario:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuário com ID {usuario_id} não encontrado"
+            )
+
+        db.delete(usuario)
+        db.commit()
+        return True
+
+    @staticmethod
+    def autenticar(db: Session, email: str, senha: str) -> Optional[Usuario]:
+        """Autentica um usuário verificando email e senha."""
+        usuario = UsuarioController.buscar_por_email(db, email.lower())
+        if not usuario:
+            return None
+        if not UsuarioController._verificar_senha(senha, usuario.senha):
+            return None
+        return usuario
