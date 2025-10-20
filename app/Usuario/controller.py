@@ -15,7 +15,14 @@ class UsuarioController:
 
     @staticmethod
     def _hash_senha(senha: str) -> str:
-        """Gera hash da senha usando bcrypt."""
+        if isinstance(senha, bytes):
+            senha = senha.decode("utf-8")
+        # Se já for hash bcrypt, retorna direto
+        if senha.startswith("$2b$"):
+            return senha
+        # Trunca se maior que 72 bytes
+        if len(senha.encode("utf-8")) > 72:
+            senha = senha[:72]
         return pwd_context.hash(senha)
 
     @staticmethod

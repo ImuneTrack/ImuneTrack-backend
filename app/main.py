@@ -6,6 +6,8 @@ from app.Usuario.routes import router as usuario_router
 from app.Vacina.routes import router as vacina_router
 from app.Usuario import model as usuario_model 
 from app.Vacina import model as vacina_model
+from app.HistoricoVacina.routes import router as historico_router
+from app.HistoricoVacina import model as historico_model
 
 # Função para criar tabelas com retry caso o banco ainda não esteja pronto
 def criar_tabelas_com_retry(retries=10, delay=3):
@@ -29,6 +31,7 @@ app = FastAPI(title="ImuneTrack API")
 # Inclui as rotas
 app.include_router(usuario_router)
 app.include_router(vacina_router)
+app.include_router(historico_router, prefix="/usuarios")
 
 # Endpoint raiz
 @app.get("/")
