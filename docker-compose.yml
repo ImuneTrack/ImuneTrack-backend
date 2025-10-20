@@ -43,7 +43,7 @@ services:
         condition: service_healthy
     environment:
       - ENV=test
-      - DATABASE_URL=postgresql+psycopg2://imunetrack_user:imunetrack_pass@db:5432/imunetrack_user
+      - DATABASE_URL=sqlite:///./test_imunetrack.db
     command: >
       pytest -v --disable-warnings --maxfail=1
     volumes:

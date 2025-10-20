@@ -8,3 +8,4 @@ pydantic
 pydantic[email]
 pytest
 httpx
+bcrypt==4.3.0
