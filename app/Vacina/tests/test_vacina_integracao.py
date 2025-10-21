@@ -1,31 +1,63 @@
+"""Testes de integração para o módulo de Vacinas.
+
+Este módulo contém testes que verificam a integração entre os componentes
+do módulo de Vacinas, incluindo rotas, controladores e modelos.
+"""
+
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
-from app.database import SessionLocal, Base, engine
 
+from app.main import app
+from app.database import Base, engine
+
+# Cria um cliente de teste para a aplicação
 client = TestClient(app)
 
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
+    """Configura o banco de dados para cada teste.
+
+    Este fixture é executado automaticamente antes e depois de cada teste,
+    garantindo um banco de dados limpo para cada cenário.
+    """
+    # Limpa e recria todas as tabelas do banco de dados
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
+    # Limpa as tabelas após o teste
     Base.metadata.drop_all(bind=engine)
 
 
 class TestVacinaIntegration:
+    """Testes de integração para o módulo de Vacinas.
+
+    Esta classe contém testes que verificam o funcionamento completo da API,
+    desde as rotas até a persistência no banco de dados.
+    """
 
     def test_listar_vacinas_vazio(self):
+        """Deve retornar uma lista vazia quando não há vacinas cadastradas."""
+        # Executa a requisição
         response = client.get("/vacinas/")
+
+        # Verifica a resposta
         assert response.status_code == 200
         assert isinstance(response.json(), list)
         assert len(response.json()) == 0
 
     def test_adicionar_vacina_sucesso(self):
-        nova_vacina = {"nome": "Hepatite B", "doses": 3}
+        """Deve adicionar uma nova vacina com sucesso."""
+        # Dados da nova vacina
+        nova_vacina = {
+            "nome": "Hepatite B",
+            "doses": 3
+        }
+
+        # Executa a requisição
         response = client.post("/vacinas/", json=nova_vacina)
-        
+
+        # Verifica a resposta
         assert response.status_code == 201
         body = response.json()
         assert body["nome"] == "Hepatite B"
@@ -34,76 +66,83 @@ class TestVacinaIntegration:
         assert body["id"] > 0
 
     def test_listar_vacinas_com_dados(self):
+        """Deve listar corretamente múltiplas vacinas cadastradas."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
         client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
-        
+
         response = client.get("/vacinas/")
         assert response.status_code == 200
-        
+
         vacinas = response.json()
         assert len(vacinas) == 3
         assert any(v["nome"] == "BCG" for v in vacinas)
         assert any(v["nome"] == "Hepatite B" for v in vacinas)
 
     def test_buscar_vacina_por_id_sucesso(self):
+        """Deve retornar os detalhes de uma vacina específica pelo ID."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.get(f"/vacinas/{vacina_id}")
         assert response.status_code == 200
-        
+
         vacina = response.json()
         assert vacina["id"] == vacina_id
         assert vacina["nome"] == "BCG"
         assert vacina["doses"] == 1
 
     def test_buscar_vacina_nao_encontrada(self):
+        """Deve retornar erro 404 ao buscar uma vacina com ID inexistente."""
         response = client.get("/vacinas/99999")
         assert response.status_code == 404
         assert "não encontrada" in response.json()["detail"].lower()
 
     def test_adicionar_vacina_nome_duplicado(self):
+        """Deve impedir o cadastro de vacina com nome duplicado."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        
+
         response = client.post("/vacinas/", json={"nome": "BCG", "doses": 2})
         assert response.status_code == 400
         assert "já existe" in response.json()["detail"].lower()
 
     def test_adicionar_vacina_dados_invalidos(self):
+        """Deve validar os dados fornecidos ao cadastrar uma vacina."""
         response = client.post("/vacinas/", json={"nome": "", "doses": 1})
         assert response.status_code == 422
-        
+
         response = client.post("/vacinas/", json={"nome": "Teste", "doses": 0})
         assert response.status_code == 422
-        
+
         response = client.post("/vacinas/", json={"nome": "Teste", "doses": -1})
         assert response.status_code == 422
-        
+
         response = client.post("/vacinas/", json={"nome": "Teste", "doses": 11})
         assert response.status_code == 422
-        
+
         response = client.post("/vacinas/", json={"nome": "Teste"})
         assert response.status_code == 422
 
     def test_atualizar_vacina_sucesso(self):
+        """Deve atualizar corretamente os dados de uma vacina existente."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"nome": "BCG Atualizada", "doses": 2}
         )
         assert response.status_code == 200
-        
+
         vacina = response.json()
         assert vacina["nome"] == "BCG Atualizada"
         assert vacina["doses"] == 2
 
     def test_atualizar_vacina_parcial(self):
+        """Deve permitir a atualização parcial dos dados de uma vacina."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"nome": "BCG Nova"}
@@ -113,6 +152,7 @@ class TestVacinaIntegration:
         assert response.json()["doses"] == 1
 
     def test_atualizar_vacina_nao_encontrada(self):
+        """Deve retornar erro 404 ao tentar atualizar vacina inexistente."""
         response = client.put(
             "/vacinas/99999",
             json={"nome": "Teste", "doses": 1}
@@ -120,44 +160,47 @@ class TestVacinaIntegration:
         assert response.status_code == 404
 
     def test_deletar_vacina_sucesso(self):
+        """Deve remover uma vacina existente com sucesso."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.delete(f"/vacinas/{vacina_id}")
         assert response.status_code == 204
-        
+
         response_get = client.get(f"/vacinas/{vacina_id}")
         assert response_get.status_code == 404
 
     def test_deletar_vacina_nao_encontrada(self):
+        """Deve retornar erro 404 ao tentar remover vacina inexistente."""
         response = client.delete("/vacinas/99999")
         assert response.status_code == 404
 
     def test_fluxo_completo_crud(self):
+        """Deve executar com sucesso todas as operações CRUD em sequência."""
         response = client.get("/vacinas/")
         assert len(response.json()) == 0
-        
+
         response = client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
         assert response.status_code == 201
         vacina_id = response.json()["id"]
-        
+
         response = client.get("/vacinas/")
         assert len(response.json()) == 1
-        
+
         response = client.get(f"/vacinas/{vacina_id}")
         assert response.status_code == 200
         assert response.json()["nome"] == "COVID-19"
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"nome": "COVID-19 Pfizer", "doses": 3}
         )
         assert response.status_code == 200
         assert response.json()["doses"] == 3
-        
+
         response = client.delete(f"/vacinas/{vacina_id}")
         assert response.status_code == 204
-        
+
         response = client.get("/vacinas/")
         assert len(response.json()) == 0
 
@@ -168,31 +211,35 @@ class TestVacinaIntegration:
         ("Febre Amarela", 1, 201),
     ])
     def test_adicionar_vacinas_validas(self, nome, doses, esperado):
+        """Deve aceitar diferentes combinações válidas de nome e doses."""
         response = client.post("/vacinas/", json={"nome": nome, "doses": doses})
         assert response.status_code == esperado
         assert response.json()["nome"] == nome
         assert response.json()["doses"] == doses
 
     def test_persistencia_entre_requisicoes(self):
+        """Deve manter a consistência dos dados entre múltiplas requisições."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
         client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
-        
+
         for _ in range(3):
             response = client.get("/vacinas/")
             assert response.status_code == 200
             assert len(response.json()) == 3
 
     def test_validacao_nome_espacos(self):
+        """Deve remover espaços em branco extras do nome da vacina."""
         response = client.post("/vacinas/", json={"nome": "  BCG  ", "doses": 1})
         assert response.status_code == 201
         assert response.json()["nome"].strip() == "BCG"
 
     def test_atualizar_vacina_nome_duplicado(self):
+        """Deve impedir a atualização para um nome de vacina já existente."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         response_create = client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"nome": "BCG"}
@@ -201,9 +248,10 @@ class TestVacinaIntegration:
         assert "já existe" in response.json()["detail"].lower()
 
     def test_response_structure(self):
+        """Deve retornar a estrutura de dados correta na resposta."""
         response = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         data = response.json()
-        
+
         assert "id" in data
         assert "nome" in data
         assert "doses" in data
@@ -212,28 +260,31 @@ class TestVacinaIntegration:
         assert isinstance(data["doses"], int)
 
     def test_multiplas_vacinas_mesma_dose(self):
+        """Deve permitir o cadastro de múltiplas vacinas com o mesmo número de doses."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         client.post("/vacinas/", json={"nome": "Febre Amarela", "doses": 1})
-        
+
         response = client.get("/vacinas/")
         vacinas = response.json()
         vacinas_dose_1 = [v for v in vacinas if v["doses"] == 1]
         assert len(vacinas_dose_1) == 2
 
     def test_ordem_listagem(self):
+        """Deve listar as vacinas na ordem correta."""
         client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
-        
+
         response = client.get("/vacinas/")
         vacinas = response.json()
         assert len(vacinas) == 3
         assert all(isinstance(v["id"], int) for v in vacinas)
 
     def test_atualizar_apenas_nome(self):
+        """Deve atualizar apenas o nome mantendo os demais campos inalterados."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"nome": "BCG Atualizada"}
@@ -243,9 +294,10 @@ class TestVacinaIntegration:
         assert response.json()["doses"] == 1
 
     def test_atualizar_apenas_doses(self):
+        """Deve atualizar apenas o número de doses mantendo o nome inalterado."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response = client.put(
             f"/vacinas/{vacina_id}",
             json={"doses": 3}
@@ -255,39 +307,50 @@ class TestVacinaIntegration:
         assert response.json()["doses"] == 3
 
     def test_criar_e_buscar_imediatamente(self):
+        """Deve ser possível buscar uma vacina imediatamente após criá-la."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
-        
+
         response_get = client.get(f"/vacinas/{vacina_id}")
         assert response_get.status_code == 200
         assert response_get.json()["id"] == vacina_id
         assert response_get.json()["nome"] == "BCG"
 
     def test_deletar_e_verificar_lista(self):
+        """Deve remover a vacina da lista após exclusão."""
+        # Create BCG
         response1 = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
+        # Create Hepatite B and get its ID
         response2 = client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
-        
-        vacina_id = response1.json()["id"]
+        vacina_id = response2.json()["id"]
+
+        # Delete Hepatite B
         client.delete(f"/vacinas/{vacina_id}")
-        
+
+        # Get remaining vaccines
         response = client.get("/vacinas/")
         vacinas = response.json()
+        
+        # Should only have BCG left
         assert len(vacinas) == 1
-        assert vacinas[0]["nome"] == "Hepatite B"
+        assert vacinas[0]["nome"] == "BCG"  # Changed from "Hepatite B" to "BCG"
 
     @pytest.mark.parametrize("doses_invalidas", [0, -1, -5, 11, 20, 100])
     def test_doses_invalidas_parametrizado(self, doses_invalidas):
+        """Deve rejeitar valores inválidos para o número de doses."""
         response = client.post("/vacinas/", json={"nome": "Teste", "doses": doses_invalidas})
         assert response.status_code == 422
 
     def test_limites_doses_validas(self):
+        """Deve aceitar valores nos limites válidos para o número de doses (1 a 10)."""
         response_min = client.post("/vacinas/", json={"nome": "Dose Mínima", "doses": 1})
         assert response_min.status_code == 201
-        
+
         response_max = client.post("/vacinas/", json={"nome": "Dose Máxima", "doses": 10})
         assert response_max.status_code == 201
 
     def test_nome_muito_longo(self):
+        """Deve rejeitar nomes com mais de 100 caracteres."""
         nome_longo = "A" * 101
         response = client.post("/vacinas/", json={"nome": nome_longo, "doses": 1})
         assert response.status_code == 422

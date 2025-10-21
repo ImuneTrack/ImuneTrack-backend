@@ -1,7 +1,8 @@
+""" Testes de integração para o histórico vacinal """
 import pytest
-from datetime import datetime, date
+from datetime import date
 from fastapi.testclient import TestClient
-from app.main import app 
+from app.main import app
 from app.database import get_db
 from app.HistoricoVacina.model import StatusDose
 from app.Vacina.model import Vacina
@@ -11,7 +12,7 @@ from app.HistoricoVacina.model import HistoricoVacinal
 # Exemplo de fixtures de usuário e vacina
 @pytest.fixture
 def criar_usuario(db_session):
-    from app.Usuario.model import Usuario
+    """criar usuario para testes"""
     usuario = Usuario(nome="Test User", email="testuser@example.com", senha="senha_hashed")
     db_session.add(usuario)
     db_session.commit()
@@ -20,6 +21,7 @@ def criar_usuario(db_session):
 
 @pytest.fixture
 def db_session():
+    """criar sessao para testes"""
     from app.database import SessionLocal, Base, engine
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -32,7 +34,7 @@ def db_session():
 # Testes de integração para o histórico vacinal
 @pytest.fixture
 def criar_vacina(db_session):
-    from app.Vacina.model import Vacina
+    """criar vacina para testes"""
     vacina = Vacina(nome="Vacina Teste", doses=3)
     db_session.add(vacina)
     db_session.commit()
@@ -41,7 +43,7 @@ def criar_vacina(db_session):
 
 @pytest.fixture(scope="module")
 def client():
-    """Fixture para fornecer um TestClient do FastAPI."""
+    """fixture para fornecer um TestClient do FastAPI."""
     with TestClient(app) as c:
         yield c
 
@@ -51,8 +53,8 @@ def test_criar_historico(db_session):
     novo_historico = HistoricoVacinal(
         usuario_id=1,
         vacina_id=1,
-        numero_dose=1,                   
-        status=StatusDose.APLICADA,      
+        numero_dose=1,
+        status=StatusDose.APLICADA,
         data_aplicacao=data_aplicacao
     )
     db_session.add(novo_historico)
@@ -64,6 +66,7 @@ def test_criar_historico(db_session):
 
 # Teste de listagem de histórico vacinal
 def test_listar_historico(client: TestClient, criar_usuario, criar_vacina, db_session):
+    """testar listagem de historico"""
     app.dependency_overrides[get_db] = lambda: db_session
 
     historico = HistoricoVacinal(
@@ -89,6 +92,7 @@ def test_listar_historico(client: TestClient, criar_usuario, criar_vacina, db_se
 
 # Teste de atualização de histórico vacinal
 def test_atualizar_historico(client: TestClient, criar_usuario, criar_vacina, db_session):
+    """testar atualizacao de historico"""
     from app.HistoricoVacina.model import HistoricoVacinal
     historico = HistoricoVacinal(
         usuario_id=criar_usuario.id,
@@ -111,6 +115,7 @@ def test_atualizar_historico(client: TestClient, criar_usuario, criar_vacina, db
 
 # Teste de marcar dose como aplicada
 def test_marcar_como_aplicada(client: TestClient, criar_usuario, criar_vacina, db_session):
+    """testar marcar dose como aplicada"""
     from app.HistoricoVacina.model import HistoricoVacinal
     historico = HistoricoVacinal(
         usuario_id=criar_usuario.id,
@@ -133,6 +138,7 @@ def test_marcar_como_aplicada(client: TestClient, criar_usuario, criar_vacina, d
 
 # Teste de deleção de histórico vacinal
 def test_deletar_historico(client: TestClient, criar_usuario, criar_vacina, db_session):
+    """testar delecao de historico"""
     from app.HistoricoVacina.model import HistoricoVacinal
     historico = HistoricoVacinal(
         usuario_id=criar_usuario.id,
@@ -149,3 +155,4 @@ def test_deletar_historico(client: TestClient, criar_usuario, criar_vacina, db_s
 
     resp_get = client.get(f"/usuarios/{criar_usuario.id}/historico/{historico.id}")
     assert resp_get.status_code == 404
+

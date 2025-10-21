@@ -1,8 +1,19 @@
+"""Modelo de dados para representar as vacinas no sistema."""
+
 from sqlalchemy import Column, Integer, String
-from app.database import Base
 from sqlalchemy.orm import relationship
 
+from app.database import Base
+
+
 class Vacina(Base):
+    """Modelo que representa uma vacina no sistema.
+    
+    Atributos:
+        id: Identificador único da vacina
+        nome: Nome da vacina (único)
+        doses: Número de doses necessárias
+    """
     __tablename__ = "vacinas"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -12,12 +23,21 @@ class Vacina(Base):
     historico_vacinal = relationship("HistoricoVacinal", back_populates="vacina")
 
     def __repr__(self) -> str:
+        """Retorna uma representação em string do objeto Vacina.
+        
+        Returns:
+            str: Representação da vacina
+        """
         return f"<Vacina(id={self.id}, nome='{self.nome}', doses={self.doses})>"
 
     def to_dict(self) -> dict:
+        """Converte o objeto Vacina para um dicionário.
+        
+        Returns:
+            dict: Dicionário com os dados da vacina
+        """
         return {
             "id": self.id,
             "nome": self.nome,
             "doses": self.doses
         }
-

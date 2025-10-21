@@ -1,3 +1,4 @@
+"""Rotas do histórico vacinal."""
 from typing import List, Optional
 from fastapi import APIRouter, Depends, status, HTTPException, Query, Path
 from sqlalchemy.orm import Session
@@ -32,12 +33,13 @@ async def listar_historico(
     vacina_id: Optional[int] = Query(None),
     status_filtro: Optional[StatusDoseEnum] = Query(None),
     db: Session = Depends(get_db)
-):    
+):
+    """lista historico """
     # Converte string do enum para o enum do modelo
     status_model = None
     if status_filtro:
         status_model = StatusDose(status_filtro.value)
-    
+
     historico = HistoricoVacinalController.listar_por_usuario(
         db=db,
         usuario_id=usuario_id,
@@ -46,7 +48,7 @@ async def listar_historico(
         vacina_id=vacina_id,
         status_filtro=status_model
     )
-    
+
     # Converte para o formato de resposta completo
     resultado = []
     for h in historico:
@@ -67,7 +69,7 @@ async def listar_historico(
             "created_at": h.created_at,
             "updated_at": h.updated_at
         })
-    
+
     return resultado
 
 
@@ -81,7 +83,8 @@ async def listar_historico(
 async def obter_estatisticas(
     usuario_id: int,
     db: Session = Depends(get_db)
-):    
+):
+    """obter estatisticas do historico"""
     estatisticas = HistoricoVacinalController.obter_estatisticas(db, usuario_id)
     return estatisticas
 
@@ -99,13 +102,14 @@ async def buscar_registro(
     historico_id: int,
     db: Session = Depends(get_db)
 ):
+    """buscar registro do historico"""
     historico = HistoricoVacinalController.buscar_por_id(db, historico_id, usuario_id)
     if not historico:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Registro com ID {historico_id} não encontrado"
         )
-    
+
     return {
         "id": historico.id,
         "usuario_id": historico.usuario_id,
@@ -138,9 +142,9 @@ async def criar_registro(
     historico: HistoricoVacinalCreate,
     db: Session = Depends(get_db)
 ):
-    
+    """criar registro no historico"""
     status_model = StatusDose(historico.status.value)
-    
+
     novo_registro = HistoricoVacinalController.criar_registro(
         db=db,
         usuario_id=usuario_id,
@@ -154,7 +158,7 @@ async def criar_registro(
         profissional=historico.profissional,
         observacoes=historico.observacoes
     )
-    
+
     return {
         "id": novo_registro.id,
         "usuario_id": novo_registro.usuario_id,
@@ -186,11 +190,12 @@ async def atualizar_registro(
     historico_id: int,
     historico: HistoricoVacinalUpdate,
     db: Session = Depends(get_db)
-):    
+):
+    """atualizar registro do historico"""
     status_model = None
     if historico.status:
         status_model = StatusDose(historico.status.value)
-    
+
     registro_atualizado = HistoricoVacinalController.atualizar_registro(
         db=db,
         historico_id=historico_id,
@@ -204,7 +209,7 @@ async def atualizar_registro(
         profissional=historico.profissional,
         observacoes=historico.observacoes
     )
-    
+
     return {
         "id": registro_atualizado.id,
         "usuario_id": registro_atualizado.usuario_id,
@@ -239,7 +244,8 @@ async def marcar_como_aplicada(
     local_aplicacao: Optional[str] = Query(None, description="Local onde foi aplicada"),
     profissional: Optional[str] = Query(None, description="Nome do profissional"),
     db: Session = Depends(get_db)
-):    
+):
+    """marcar dose como aplicada"""
     registro_atualizado = HistoricoVacinalController.marcar_dose_como_aplicada(
         db=db,
         historico_id=historico_id,
@@ -249,7 +255,7 @@ async def marcar_como_aplicada(
         local_aplicacao=local_aplicacao,
         profissional=profissional
     )
-    
+
     return {
         "id": registro_atualizado.id,
         "usuario_id": registro_atualizado.usuario_id,
@@ -279,6 +285,7 @@ async def deletar_registro(
     usuario_id: int,
     historico_id: int,
     db: Session = Depends(get_db)
-):    
+):
+    """deletar registro do historico"""
     HistoricoVacinalController.deletar_registro(db, historico_id, usuario_id)
     return None

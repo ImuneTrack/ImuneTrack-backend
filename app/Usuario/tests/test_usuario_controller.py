@@ -1,6 +1,10 @@
+"""Testes unitários para o controlador de usuários."""
 import pytest
+"""Este módulo contém testes para as funções do controlador de usuários,
+verificando o comportamento esperado de cada operação CRUD.
+"""
 from unittest.mock import Mock, patch
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from app.Usuario.controller import UsuarioController
 from app.Usuario.model import Usuario
 
@@ -65,7 +69,7 @@ class TestUsuarioController:
         assert resultado.email == "alice@test.com"
 
     @patch.object(UsuarioController, '_hash_senha', return_value='hashed_password')
-    def test_criar_usuario_sucesso(self, mock_hash):
+    def test_criar_usuario_sucesso(self, mock_hash_senha):
         """Deve criar usuário com sucesso."""
         db_mock = Mock()
         db_mock.query.return_value.filter.return_value.first.return_value = None
@@ -123,7 +127,7 @@ class TestUsuarioController:
         assert "mínimo 6" in exc_info.value.detail
 
     @patch.object(UsuarioController, '_hash_senha', return_value='new_hashed')
-    def test_atualizar_usuario_sucesso(self, mock_hash):
+    def test_atualizar_usuario_sucesso(self, mock_hash_senha):
         """Deve atualizar usuário com sucesso."""
         db_mock = Mock()
         usuario_mock = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")
@@ -170,7 +174,7 @@ class TestUsuarioController:
         assert exc_info.value.status_code == 404
 
     @patch.object(UsuarioController, '_verificar_senha', return_value=True)
-    def test_autenticar_sucesso(self, mock_verif):
+    def test_autenticar_sucesso(self, mock_verificar_senha):
         """Deve autenticar usuário com credenciais corretas."""
         db_mock = Mock()
         usuario_mock = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")
@@ -182,7 +186,7 @@ class TestUsuarioController:
         assert resultado.email == "alice@test.com"
 
     @patch.object(UsuarioController, '_verificar_senha', return_value=False)
-    def test_autenticar_senha_incorreta(self, mock_verif):
+    def test_autenticar_senha_incorreta(self, mock_verificar_senha):
         """Deve retornar None com senha incorreta."""
         db_mock = Mock()
         usuario_mock = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")

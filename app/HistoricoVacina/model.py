@@ -1,3 +1,4 @@
+""" Modelo de Histórico Vacinal """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Date
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -6,33 +7,33 @@ import enum
 
 
 class StatusDose(str, enum.Enum):
+    """ Enumeração de status de dose """
     PENDENTE = "pendente"
     APLICADA = "aplicada"
     ATRASADA = "atrasada"
     CANCELADA = "cancelada"
-
-# Modelo de Histórico Vacinal
 class HistoricoVacinal(Base):
+    """ Modelo de Histórico Vacinal """
     __tablename__ = "historico_vacinal"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
     vacina_id = Column(Integer, ForeignKey("vacinas.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+
     # Informações da dose
     numero_dose = Column(Integer, nullable=False)  # 1, 2, 3, etc.
     status = Column(Enum(StatusDose), default=StatusDose.PENDENTE, nullable=False, index=True)
-    
+
     # Datas
     data_aplicacao = Column(Date, nullable=True, index=True)  # Data em que foi aplicada
     data_prevista = Column(Date, nullable=True)  # Data prevista para aplicação
-    
+
     # Informações adicionais
     lote = Column(String(50), nullable=True)  # Lote da vacina
     local_aplicacao = Column(String(200), nullable=True)  # Local onde foi aplicada
     profissional = Column(String(200), nullable=True)  # Nome do profissional
     observacoes = Column(String(500), nullable=True)  # Observações gerais
-    
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
