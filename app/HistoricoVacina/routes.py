@@ -1,7 +1,11 @@
 """Rotas do histórico vacinal."""
+from datetime import date
 from typing import List, Optional
+
 from fastapi import APIRouter, Depends, status, HTTPException, Query, Path
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.schemas import (
     HistoricoVacinalCreate,
@@ -14,9 +18,22 @@ from app.schemas import (
 )
 from app.HistoricoVacina.controller import HistoricoVacinalController
 from app.HistoricoVacina.model import StatusDose
-from datetime import date
 
 router = APIRouter(prefix="/{usuario_id}/historico", tags=["Histórico Vacinal"])
+
+class FiltrosHistorico(BaseModel):
+    """Modelo para os parâmetros de filtro do histórico."""
+    ano: Optional[int] = Field(None, ge=1900, le=2100, description="Ano para filtrar o histórico")
+    mes: Optional[int] = Field(None, ge=1, le=12, description="Mês para filtrar o histórico")
+    vacina_id: Optional[int] = Field(None, description="ID da vacina para filtrar")
+    status_filtro: Optional[StatusDoseEnum] = Field(None, description="Status da dose para filtrar")
+
+class DadosAplicacao(BaseModel):
+    """Modelo para os dados de aplicação da vacina."""
+    data_aplicacao: date = Field(..., description="Data em que a dose foi aplicada")
+    lote: Optional[str] = Field(None, description="Lote da vacina")
+    local_aplicacao: Optional[str] = Field(None, description="Local onde foi aplicada")
+    profissional: Optional[str] = Field(None, description="Nome do profissional")
 
 # Listar histórico vacinal com filtros
 @router.get(
@@ -28,24 +45,19 @@ router = APIRouter(prefix="/{usuario_id}/historico", tags=["Histórico Vacinal"]
 )
 async def listar_historico(
     usuario_id: int = Path(..., description="ID do usuário"),
-    ano: Optional[int] = Query(None, ge=1900, le=2100),
-    mes: Optional[int] = Query(None, ge=1, le=12),
-    vacina_id: Optional[int] = Query(None),
-    status_filtro: Optional[StatusDoseEnum] = Query(None),
+    filtros: FiltrosHistorico = Depends(),
     db: Session = Depends(get_db)
 ):
-    """lista historico """
+    """Lista o histórico vacinal do usuário com filtros opcionais."""
     # Converte string do enum para o enum do modelo
-    status_model = None
-    if status_filtro:
-        status_model = StatusDose(status_filtro.value)
+    status_model = StatusDose(filtros.status_filtro.value) if filtros.status_filtro else None
 
     historico = HistoricoVacinalController.listar_por_usuario(
         db=db,
         usuario_id=usuario_id,
-        ano=ano,
-        mes=mes,
-        vacina_id=vacina_id,
+        ano=filtros.ano,
+        mes=filtros.mes,
+        vacina_id=filtros.vacina_id,
         status_filtro=status_model
     )
 
@@ -148,15 +160,7 @@ async def criar_registro(
     novo_registro = HistoricoVacinalController.criar_registro(
         db=db,
         usuario_id=usuario_id,
-        vacina_id=historico.vacina_id,
-        numero_dose=historico.numero_dose,
-        status=status_model,
-        data_aplicacao=historico.data_aplicacao,
-        data_prevista=historico.data_prevista,
-        lote=historico.lote,
-        local_aplicacao=historico.local_aplicacao,
-        profissional=historico.profissional,
-        observacoes=historico.observacoes
+        historico_data=historico
     )
 
     return {
@@ -185,48 +189,42 @@ async def criar_registro(
     summary="Atualizar registro do histórico",
     description="Atualiza um registro existente no histórico vacinal"
 )
+@router.put(
+    "/{historico_id}",
+    response_model=HistoricoVacinalResponse,
+    status_code=status.HTTP_200_OK,
+    responses={404: {"model": ErrorResponse}, 400: {"model": ErrorResponse}},
+    summary="Atualizar registro do histórico",
+    description="Atualiza um registro existente no histórico vacinal"
+)
 async def atualizar_registro(
     usuario_id: int,
     historico_id: int,
     historico: HistoricoVacinalUpdate,
     db: Session = Depends(get_db)
 ):
-    """atualizar registro do historico"""
-    status_model = None
-    if historico.status:
-        status_model = StatusDose(historico.status.value)
+    """Atualiza um registro do histórico."""
+    # Convert Pydantic model to dict, excluding unset values
+    update_data = historico.model_dump(exclude_unset=True)
+
+    # Convert status enum to model if present
+    if 'status' in update_data and update_data['status'] is not None:
+        update_data['status'] = StatusDose(update_data['status'].value)
 
     registro_atualizado = HistoricoVacinalController.atualizar_registro(
         db=db,
         historico_id=historico_id,
         usuario_id=usuario_id,
-        numero_dose=historico.numero_dose,
-        status_novo=status_model,
-        data_aplicacao=historico.data_aplicacao,
-        data_prevista=historico.data_prevista,
-        lote=historico.lote,
-        local_aplicacao=historico.local_aplicacao,
-        profissional=historico.profissional,
-        observacoes=historico.observacoes
+        update_data=update_data
     )
 
-    return {
-        "id": registro_atualizado.id,
-        "usuario_id": registro_atualizado.usuario_id,
-        "vacina_id": registro_atualizado.vacina_id,
-        "vacina_nome": registro_atualizado.vacina.nome,
-        "numero_dose": registro_atualizado.numero_dose,
-        "status": registro_atualizado.status,
-        "data_aplicacao": registro_atualizado.data_aplicacao,
-        "data_prevista": registro_atualizado.data_prevista,
-        "lote": registro_atualizado.lote,
-        "local_aplicacao": registro_atualizado.local_aplicacao,
-        "profissional": registro_atualizado.profissional,
-        "observacoes": registro_atualizado.observacoes,
-        "created_at": registro_atualizado.created_at,
-        "updated_at": registro_atualizado.updated_at
-    }
+    if not registro_atualizado:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Registro com ID {historico_id} não encontrado"
+        )
 
+    return registro_atualizado
 
 @router.patch(
     "/{historico_id}/aplicar",
@@ -239,40 +237,27 @@ async def atualizar_registro(
 async def marcar_como_aplicada(
     usuario_id: int,
     historico_id: int,
-    data_aplicacao: date = Query(..., description="Data em que a dose foi aplicada"),
-    lote: Optional[str] = Query(None, description="Lote da vacina"),
-    local_aplicacao: Optional[str] = Query(None, description="Local onde foi aplicada"),
-    profissional: Optional[str] = Query(None, description="Nome do profissional"),
+    dados: DadosAplicacao,
     db: Session = Depends(get_db)
 ):
-    """marcar dose como aplicada"""
+    """Marcar dose como aplicada com as informações fornecidas"""
     registro_atualizado = HistoricoVacinalController.marcar_dose_como_aplicada(
         db=db,
         historico_id=historico_id,
         usuario_id=usuario_id,
-        data_aplicacao=data_aplicacao,
-        lote=lote,
-        local_aplicacao=local_aplicacao,
-        profissional=profissional
+        data_aplicacao=dados.data_aplicacao,
+        lote=dados.lote,
+        local_aplicacao=dados.local_aplicacao,
+        profissional=dados.profissional
     )
 
-    return {
-        "id": registro_atualizado.id,
-        "usuario_id": registro_atualizado.usuario_id,
-        "vacina_id": registro_atualizado.vacina_id,
-        "vacina_nome": registro_atualizado.vacina.nome,
-        "numero_dose": registro_atualizado.numero_dose,
-        "status": registro_atualizado.status,
-        "data_aplicacao": registro_atualizado.data_aplicacao,
-        "data_prevista": registro_atualizado.data_prevista,
-        "lote": registro_atualizado.lote,
-        "local_aplicacao": registro_atualizado.local_aplicacao,
-        "profissional": registro_atualizado.profissional,
-        "observacoes": registro_atualizado.observacoes,
-        "created_at": registro_atualizado.created_at,
-        "updated_at": registro_atualizado.updated_at
-    }
+    if not registro_atualizado:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Registro com ID {historico_id} não encontrado"
+        )
 
+    return registro_atualizado
 
 @router.delete(
     "/{historico_id}",

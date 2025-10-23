@@ -1,7 +1,4 @@
 """Testes para as rotas de Vacina.
-
-Este módulo contém testes que verificam o funcionamento das rotas
-da API relacionadas ao gerenciamento de vacinas.
 """
 
 from unittest.mock import Mock, patch
@@ -16,13 +13,8 @@ from app.Vacina.model import Vacina
 # Cria um cliente de teste para a aplicação
 client = TestClient(app)
 
-
 class TestVacinaRoutes:
-    """Testes para as rotas de Vacina.
-
-    Esta classe contém testes que verificam o funcionamento
-    das rotas da API de vacinas.
-    """
+    """Testes para as rotas de Vacina."""
     @patch('app.Vacina.routes.VacinaController.listar_todas')
     @patch('app.Vacina.routes.get_db')
     def test_listar_vacinas_vazio(self, mock_get_db, mock_listar):
@@ -241,6 +233,7 @@ class TestVacinaRoutes:
         # Verifica a resposta
         assert response.status_code == 404
 
+ # pylint: disable=unused-argument
     @pytest.mark.parametrize("endpoint,method", [
         ("/vacinas/", "get"),
         ("/vacinas/1", "get"),

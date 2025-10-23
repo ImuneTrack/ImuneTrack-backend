@@ -1,8 +1,5 @@
 """Módulo de rotas para gerenciamento de usuários."""
 from typing import List
-"""Este módulo contém as rotas da API para operações CRUD de usuários,
-incluindo criação, leitura, atualização e exclusão.
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -22,14 +19,7 @@ router = APIRouter(prefix="/usuarios", tags=["Usuários"])
     description="Retorna a lista completa de usuários cadastrados no sistema"
 )
 async def listar_usuarios(db: Session = Depends(get_db)):
-    """Lista todos os usuários cadastrados no sistema.
-    
-    Args:
-        db: Sessão do banco de dados
-        
-    Returns:
-        List[UsuarioResponse]: Lista de usuários cadastrados
-    """
+    """Lista todos os usuários cadastrados no sistema."""
     usuarios = UsuarioController.listar_todos(db)
     return usuarios
 
@@ -43,18 +33,7 @@ async def listar_usuarios(db: Session = Depends(get_db)):
     description="Retorna os dados de um usuário específico"
 )
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    """Busca um usuário pelo ID.
-    
-    Args:
-        usuario_id: ID do usuário a ser buscado
-        db: Sessão do banco de dados
-        
-    Returns:
-        UsuarioResponse: Dados do usuário encontrado
-        
-    Raises:
-        HTTPException: Se o usuário não for encontrado
-    """
+    """Busca um usuário pelo ID."""
     usuario = UsuarioController.buscar_por_id(db, usuario_id)
     if not usuario:
         raise HTTPException(
@@ -76,15 +55,7 @@ async def cadastrar_usuario(
     usuario: UsuarioCreate,
     db: Session = Depends(get_db)
 ):
-    """Cria um novo usuário no sistema.
-    
-    Args:
-        usuario: Dados do usuário a ser criado
-        db: Sessão do banco de dados
-        
-    Returns:
-        UsuarioResponse: Dados do usuário criado
-    """
+    """Cria um novo usuário no sistema."""
     novo_usuario = UsuarioController.criar(
         db, usuario.nome, usuario.email, usuario.senha
     )
@@ -104,19 +75,7 @@ async def atualizar_usuario(
     usuario: UsuarioUpdate,
     db: Session = Depends(get_db)
 ):
-    """Atualiza os dados de um usuário existente.
-    
-    Args:
-        usuario_id: ID do usuário a ser atualizado
-        usuario: Novos dados do usuário
-        db: Sessão do banco de dados
-        
-    Returns:
-        UsuarioResponse: Dados atualizados do usuário
-        
-    Raises:
-        HTTPException: Se o usuário não for encontrado
-    """
+    """Atualiza os dados de um usuário existente."""
     usuario_atualizado = UsuarioController.atualizar(
         db, usuario_id, usuario.nome, usuario.email, usuario.senha
     )
@@ -131,18 +90,7 @@ async def atualizar_usuario(
     description="Remove um usuário do sistema"
 )
 async def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    """Remove um usuário do sistema.
-    
-    Args:
-        usuario_id: ID do usuário a ser removido
-        db: Sessão do banco de dados
-        
-    Returns:
-        None
-        
-    Raises:
-        HTTPException: Se o usuário não for encontrado
-    """
+    """Remove um usuário do sistema."""
     UsuarioController.deletar(db, usuario_id)
     return None
 
@@ -156,18 +104,7 @@ async def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     description="Valida email e senha do usuário"
 )
 async def login(email: str, senha: str, db: Session = Depends(get_db)):
-    """Autentica um usuário.
-    
-    Args:
-        email: Email do usuário
-        senha: Senha do usuário
-        db: Sessão do banco de dados
-        
-    Returns:
-        UsuarioResponse: Dados do usuário autenticado
-        
-    Raises:
-        HTTPException: Se o usuário não for encontrado"""
+    """Autentica um usuário."""
     usuario = UsuarioController.autenticar(db, email, senha)
     if not usuario:
         raise HTTPException(

@@ -1,8 +1,4 @@
-"""Rotas da API para gerenciamento de vacinas.
-
-Este módulo define os endpoints REST para operações relacionadas a vacinas,
-incluindo listagem, busca, criação, atualização e remoção.
-"""
+"""Rotas da API para gerenciamento de vacinas."""
 
 from typing import List
 
@@ -23,14 +19,7 @@ router = APIRouter(prefix="/vacinas", tags=["Vacinas"])
     description="Retorna a lista completa de vacinas cadastradas no sistema"
 )
 async def listar_vacinas(db: Session = Depends(get_db)) -> List[VacinaResponse]:
-    """Lista todas as vacinas cadastradas no sistema.
-
-    Args:
-        db: Sessão do banco de dados (injetada automaticamente)
-
-    Returns:
-        List[VacinaResponse]: Lista de todas as vacinas cadastradas
-    """
+    """Lista todas as vacinas cadastradas no sistema."""
     vacinas = VacinaController.listar_todas(db)
     return vacinas
 
@@ -46,18 +35,7 @@ async def buscar_vacina(
     vacina_id: int,
     db: Session = Depends(get_db)
 ) -> VacinaResponse:
-    """Busca uma vacina pelo seu ID.
-
-    Args:
-        vacina_id: ID da vacina a ser buscada
-        db: Sessão do banco de dados (injetada automaticamente)
-
-    Returns:
-        VacinaResponse: Dados da vacina encontrada
-        
-    Raises:
-        HTTPException: Se a vacina não for encontrada (404)
-    """
+    """Busca uma vacina pelo seu ID."""
     vacina = VacinaController.buscar_por_id(db, vacina_id)
     if not vacina:
         raise HTTPException(
@@ -78,18 +56,7 @@ async def cadastrar_vacina(
     vacina: VacinaCreate,
     db: Session = Depends(get_db)
 ) -> VacinaResponse:
-    """Cadastra uma nova vacina no sistema.
-    
-    Args:
-        vacina: Dados da vacina a ser cadastrada
-        db: Sessão do banco de dados (injetada automaticamente)
-        
-    Returns:
-        VacinaResponse: Dados da vacina recém-criada
-        
-    Raises:
-        HTTPException: Se os dados forem inválidos (400)
-    """
+    """Cadastra uma nova vacina no sistema."""
     nova_vacina = VacinaController.criar(db, vacina.nome, vacina.doses)
     return nova_vacina
 
@@ -109,19 +76,7 @@ async def atualizar_vacina(
     vacina: VacinaUpdate,
     db: Session = Depends(get_db)
 ) -> VacinaResponse:
-    """Atualiza os dados de uma vacina existente.
-
-    Args:
-        vacina_id: ID da vacina a ser atualizada
-        vacina: Novos dados da vacina
-        db: Sessão do banco de dados (injetada automaticamente)
-
-    Returns:
-        VacinaResponse: Dados atualizados da vacina
-        
-    Raises:
-        HTTPException: Se a vacina não for encontrada (404) ou os dados forem inválidos (400)
-    """
+    """Atualiza os dados de uma vacina existente."""
     vacina_atualizada = VacinaController.atualizar(
         db, vacina_id, vacina.nome, vacina.doses
     )
@@ -138,14 +93,6 @@ async def deletar_vacina(
     vacina_id: int,
     db: Session = Depends(get_db)
 ) -> None:
-    """Remove uma vacina do sistema.
-
-    Args:
-        vacina_id: ID da vacina a ser removida
-        db: Sessão do banco de dados (injetada automaticamente)
-
-    Raises:
-        HTTPException: Se a vacina não for encontrada (404)
-    """
+    """Remove uma vacina do sistema."""
     VacinaController.deletar(db, vacina_id)
     return None

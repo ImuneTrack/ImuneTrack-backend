@@ -1,112 +1,91 @@
 """ Controlador para operações do histórico vacinal """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import date
+from dataclasses import dataclass
+
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, extract
 from fastapi import HTTPException, status
+
 from app.HistoricoVacina.model import HistoricoVacinal, StatusDose
 from app.Vacina.model import Vacina
 from app.Usuario.model import Usuario
+from app.schemas import HistoricoVacinalCreate
+
+@dataclass
+class HistoricoVacinalData:
+    """Dados para criação/atualização de histórico vacinal."""
+    usuario_id: int
+    vacina_id: int
+    numero_dose: int
+    status: StatusDose = StatusDose.PENDENTE
+    data_aplicacao: Optional[date] = None
+    data_prevista: Optional[date] = None
+    lote: Optional[str] = None
+    local_aplicacao: Optional[str] = None
+    profissional: Optional[str] = None
+    observacoes: Optional[str] = None
 
 class HistoricoVacinalController:
-    """ Controlador para operações do histórico vacinal """
+    """Controlador para operações do histórico vacinal."""
 
     @staticmethod
     def criar_registro(
         db: Session,
         usuario_id: int,
-        vacina_id: int,
-        numero_dose: int,
-        status: StatusDose = StatusDose.PENDENTE,
-        data_aplicacao: Optional[date] = None,
-        data_prevista: Optional[date] = None,
-        lote: Optional[str] = None,
-        local_aplicacao: Optional[str] = None,
-        profissional: Optional[str] = None,
-        observacoes: Optional[str] = None
+        historico_data: HistoricoVacinalCreate
     ) -> HistoricoVacinal:
-
-        # Verifica se usuário já existe
+        """Cria um novo registro de histórico vacinal."""
         usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
         if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Usuário com ID {usuario_id} não encontrado"
             )
-
-        # Verifica se vacina já existe
-        vacina = db.query(Vacina).filter(Vacina.id == vacina_id).first()
+        vacina = db.query(Vacina).filter(Vacina.id == historico_data.vacina_id).first()
         if not vacina:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Vacina com ID {vacina_id} não encontrada"
+                detail=f"Vacina com ID {historico_data.vacina_id} não encontrada"
             )
-
-        # Valida número da dose
-        if numero_dose < 1 or numero_dose > vacina.doses:
+        if historico_data.numero_dose < 1 or historico_data.numero_dose > vacina.doses:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Número da dose deve estar entre 1 e {vacina.doses}"
             )
-
-        # Verifica se já existe registro dessa dose
-        registro_existente = db.query(HistoricoVacinal).filter(
-            and_(
-                HistoricoVacinal.usuario_id == usuario_id,
-                HistoricoVacinal.vacina_id == vacina_id,
-                HistoricoVacinal.numero_dose == numero_dose
-            )
-        ).first()
-
-        # Caso exista, retorna erro
-        if registro_existente:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Já existe registro da dose {numero_dose} para esta vacina"
-            )
-
-        # Valida data de aplicação
-        if data_aplicacao and data_aplicacao > date.today():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Data de aplicação não pode ser no futuro"
-            )
-
-        # Cria o registro
         historico = HistoricoVacinal(
             usuario_id=usuario_id,
-            vacina_id=vacina_id,
-            numero_dose=numero_dose,
-            status=status,
-            data_aplicacao=data_aplicacao,
-            data_prevista=data_prevista,
-            lote=lote,
-            local_aplicacao=local_aplicacao,
-            profissional=profissional,
-            observacoes=observacoes
+            vacina_id=historico_data.vacina_id,
+            numero_dose=historico_data.numero_dose,
+            status=StatusDose(historico_data.status.value),
+            data_aplicacao=historico_data.data_aplicacao,
+            data_prevista=historico_data.data_prevista,
+            lote=historico_data.lote,
+            local_aplicacao=historico_data.local_aplicacao,
+            profissional=historico_data.profissional,
+            observacoes=historico_data.observacoes
         )
-
         db.add(historico)
         db.commit()
         db.refresh(historico)
         return historico
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments
     #Lista o histórico vacinal de um usuário com filtros opcionais.
     @staticmethod
     def listar_por_usuario(
         db: Session,
         usuario_id: int,
         ano: Optional[int] = None,
+        mes: Optional[int] = None,
         vacina_id: Optional[int] = None,
-        status_filtro: Optional[StatusDose] = None,
-        mes: Optional[int] = None
+        status_filtro: Optional[StatusDose] = None
     ) -> List[HistoricoVacinal]:
-        """ Lista o histórico vacinal de um usuário com filtros opcionais."""
+        """Lista o histórico vacinal de um usuário com filtros opcionais."""
         query = db.query(HistoricoVacinal).options(
             joinedload(HistoricoVacinal.vacina)
         ).filter(HistoricoVacinal.usuario_id == usuario_id)
 
-        # Aplica filtros para ano, mês, vacina e status
         if ano:
             query = query.filter(
                 extract('year', HistoricoVacinal.data_aplicacao) == ano
@@ -130,9 +109,26 @@ class HistoricoVacinalController:
 
     # Busca um registro específico do histórico vacinal por ID.
     @staticmethod
-    def buscar_por_id(db: Session, historico_id: int, usuario_id: int) -> Optional[HistoricoVacinal]:
-        """ Busca um registro específico do histórico vacinal por ID."""
-        return db.query(HistoricoVacinal).options(
+    def buscar_por_id(db: Session, historico_id: int, usuario_id: int):
+        """Busca um histórico pelo ID."""
+        historico = db.query(HistoricoVacinal).filter(
+            HistoricoVacinal.id == historico_id,
+            HistoricoVacinal.usuario_id == usuario_id
+        ).first()
+        if not historico:
+            return None
+
+        return historico.to_dict()
+
+    @staticmethod
+    def atualizar_registro(
+        db: Session,
+        historico_id: int,
+        usuario_id: int,
+        update_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Atualiza um registro de histórico vacinal."""
+        historico = db.query(HistoricoVacinal).options(
             joinedload(HistoricoVacinal.vacina)
         ).filter(
             and_(
@@ -141,72 +137,43 @@ class HistoricoVacinalController:
             )
         ).first()
 
-    @staticmethod
-    def atualizar_registro(
-        db: Session,
-        historico_id: int,
-        usuario_id: int,
-        numero_dose: Optional[int] = None,
-        status_novo: Optional[StatusDose] = None,
-        data_aplicacao: Optional[date] = None,
-        data_prevista: Optional[date] = None,
-        lote: Optional[str] = None,
-        local_aplicacao: Optional[str] = None,
-        profissional: Optional[str] = None,
-        observacoes: Optional[str] = None
-    ) -> HistoricoVacinal:
-        """ Atualiza um registro do histórico vacinal."""
-        historico = HistoricoVacinalController.buscar_por_id(db, historico_id, usuario_id)
         if not historico:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Registro com ID {historico_id} não encontrado"
-            )
+            return None
 
-        # Atualiza campos se fornecidos
-        if numero_dose is not None:
-            vacina = historico.vacina
-            if numero_dose < 1 or numero_dose > vacina.doses:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Número da dose deve estar entre 1 e {vacina.doses}"
-                )
-            historico.numero_dose = numero_dose
-
-        if status_novo is not None:
-            historico.status = status_novo
-
-        if data_aplicacao is not None:
-            if data_aplicacao > date.today():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Data de aplicação não pode ser no futuro"
-                )
-            historico.data_aplicacao = data_aplicacao
-
-        if data_prevista is not None:
-            historico.data_prevista = data_prevista
-
-        if lote is not None:
-            historico.lote = lote
-
-        if local_aplicacao is not None:
-            historico.local_aplicacao = local_aplicacao
-
-        if profissional is not None:
-            historico.profissional = profissional
-
-        if observacoes is not None:
-            historico.observacoes = observacoes
+        # Atualiza os campos
+        for key, value in update_data.items():
+            setattr(historico, key, value)
 
         db.commit()
         db.refresh(historico)
-        return historico
+
+        # Retorna o formato esperado pelo response model
+        return {
+            "id": historico.id,
+            "usuario_id": historico.usuario_id,
+            "vacina_id": historico.vacina_id,
+            "vacina_nome": historico.vacina.nome,  # Adiciona o nome da vacina no nível raiz
+            "numero_dose": historico.numero_dose,
+            "status": historico.status,
+            "data_aplicacao": historico.data_aplicacao,
+            "data_prevista": historico.data_prevista,
+            "lote": historico.lote,
+            "local_aplicacao": historico.local_aplicacao,
+            "profissional": historico.profissional,
+            "observacoes": historico.observacoes,
+            "created_at": historico.created_at,
+            "updated_at": historico.updated_at
+        }
+
 
     @staticmethod
     def deletar_registro(db: Session, historico_id: int, usuario_id: int) -> bool:
-        """ Deleta um registro do histórico vacinal."""
-        historico = HistoricoVacinalController.buscar_por_id(db, historico_id, usuario_id)
+        """Deleta um registro do histórico vacinal."""
+        historico = db.query(HistoricoVacinal).filter(
+            HistoricoVacinal.id == historico_id,
+            HistoricoVacinal.usuario_id == usuario_id
+        ).first()
+
         if not historico:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -241,7 +208,8 @@ class HistoricoVacinalController:
             if h.status == StatusDose.APLICADA:
                 vacinas_dict[h.vacina_id]['aplicadas'] += 1
 
-        vacinas_completas = sum(1 for v in vacinas_dict.values() if v['aplicadas'] >= v['total_doses'])
+        vacinas_completas = sum(1 for v in vacinas_dict.values()
+        if v['aplicadas'] >= v['total_doses'])
         vacinas_incompletas = len(vacinas_dict) - vacinas_completas
 
         # Próximas doses a serem aplicadas
@@ -275,6 +243,7 @@ class HistoricoVacinalController:
             "proximas_doses": proximas_doses
         }
 
+# pylint: disable=too-many-arguments, too-many-positional-arguments
     @staticmethod
     def marcar_dose_como_aplicada(
         db: Session,
@@ -284,15 +253,50 @@ class HistoricoVacinalController:
         lote: Optional[str] = None,
         local_aplicacao: Optional[str] = None,
         profissional: Optional[str] = None
-    ) -> HistoricoVacinal:
-        """ Marca uma dose como aplicada."""
-        return HistoricoVacinalController.atualizar_registro(
-            db=db,
-            historico_id=historico_id,
-            usuario_id=usuario_id,
-            status_novo=StatusDose.APLICADA,
-            data_aplicacao=data_aplicacao,
-            lote=lote,
-            local_aplicacao=local_aplicacao,
-            profissional=profissional
-        )
+    ) -> Optional[Dict[str, Any]]:
+        """Marca uma dose como aplicada."""
+        historico = db.query(HistoricoVacinal).options(
+            joinedload(HistoricoVacinal.vacina)
+        ).filter(
+            and_(
+                HistoricoVacinal.id == historico_id,
+                HistoricoVacinal.usuario_id == usuario_id
+            )
+        ).first()
+
+        if not historico:
+            return None
+
+        # Update the fields
+        historico.status = StatusDose.APLICADA
+        historico.data_aplicacao = data_aplicacao
+        historico.lote = lote
+        historico.local_aplicacao = local_aplicacao
+        historico.profissional = profissional
+
+        db.commit()
+        db.refresh(historico)
+
+        # Include vacina_nome at the root level
+        return {
+            "id": historico.id,
+            "usuario_id": historico.usuario_id,
+            "vacina_id": historico.vacina_id,
+            "vacina_nome": historico.vacina.nome,  # Add this line
+            "numero_dose": historico.numero_dose,
+            "status": historico.status,
+            "data_aplicacao": historico.data_aplicacao,
+            "data_prevista": historico.data_prevista,
+            "lote": historico.lote,
+            "local_aplicacao": historico.local_aplicacao,
+            "profissional": historico.profissional,
+            "observacoes": historico.observacoes,
+            "created_at": historico.created_at,
+            "updated_at": historico.updated_at,
+            # Keep the nested vacina object if needed by other parts of the code
+            "vacina": {
+                "id": historico.vacina.id,
+                "nome": historico.vacina.nome,
+                "doses": historico.vacina.doses
+            }
+        }

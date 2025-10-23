@@ -1,8 +1,4 @@
-"""Testes unitários para o controlador de Vacina.
-
-Este módulo contém testes para validar o comportamento do VacinaController,
-incluindo operações CRUD e validações de negócio.
-"""
+"""Testes unitários para o controlador de Vacina."""
 
 from unittest.mock import Mock
 

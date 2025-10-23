@@ -21,14 +21,7 @@ class UsuarioController:
 
     @staticmethod
     def _hash_senha(senha: str) -> str:
-        """Gera um hash seguro para a senha fornecida.
-        
-        Args:
-            senha: Senha em texto puro a ser hasheada
-            
-        Returns:
-            str: Hash da senha
-        """
+        """Gera um hash seguro para a senha fornecida."""
         if isinstance(senha, bytes):
             senha = senha.decode("utf-8")
         # Se já for hash bcrypt, retorna direto
@@ -41,40 +34,18 @@ class UsuarioController:
 
     @staticmethod
     def _verificar_senha(senha: str, senha_hash: str) -> bool:
-        """Verifica se a senha corresponde ao hash.
-        
-        Args:
-            senha: Senha em texto puro
-            senha_hash: Hash da senha armazenado
-            
-        Returns:
-            bool: True se a senha for válida, False caso contrário
-        """
+        """Verifica se a senha corresponde ao hash."""
         return pwd_context.verify(senha, senha_hash)
 
     @staticmethod
     def _validar_email(email: str) -> bool:
-        """Valida formato do email.
-        
-        Args:
-            email: Email a ser validado
-            
-        Returns:
-            bool: True se o email for válido, False caso contrário
-        """
+        """Valida formato do email."""
         padrao = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         return re.match(padrao, email) is not None
 
     @staticmethod
     def _validar_senha(senha: str) -> bool:
-        """Valida força da senha.
-        
-        Args:
-            senha: Senha a ser validada
-            
-        Returns:
-            bool: True se a senha for forte o suficiente, False caso contrário
-        """
+        """Valida força da senha."""
         return len(senha) >= 6
 
     @staticmethod

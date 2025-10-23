@@ -1,8 +1,4 @@
-"""Testes de integração para o módulo de Vacinas.
-
-Este módulo contém testes que verificam a integração entre os componentes
-do módulo de Vacinas, incluindo rotas, controladores e modelos.
-"""
+"""Testes de integração para o módulo de Vacinas."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,11 +12,7 @@ client = TestClient(app)
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
-    """Configura o banco de dados para cada teste.
-
-    Este fixture é executado automaticamente antes e depois de cada teste,
-    garantindo um banco de dados limpo para cada cenário.
-    """
+    """Configura o banco de dados para cada teste."""
     # Limpa e recria todas as tabelas do banco de dados
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -29,12 +21,9 @@ def setup_database():
     Base.metadata.drop_all(bind=engine)
 
 
+# pylint: disable=too-many-public-methods
 class TestVacinaIntegration:
-    """Testes de integração para o módulo de Vacinas.
-
-    Esta classe contém testes que verificam o funcionamento completo da API,
-    desde as rotas até a persistência no banco de dados.
-    """
+    """Testes de integração para o módulo de Vacinas."""
 
     def test_listar_vacinas_vazio(self):
         """Deve retornar uma lista vazia quando não há vacinas cadastradas."""
@@ -237,7 +226,10 @@ class TestVacinaIntegration:
     def test_atualizar_vacina_nome_duplicado(self):
         """Deve impedir a atualização para um nome de vacina já existente."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        response_create = client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
+        response_create = client.post(
+            "/vacinas/",
+            json={"nome": "Hepatite B", "doses": 3}
+        )
         vacina_id = response_create.json()["id"]
 
         response = client.put(
@@ -260,7 +252,7 @@ class TestVacinaIntegration:
         assert isinstance(data["doses"], int)
 
     def test_multiplas_vacinas_mesma_dose(self):
-        """Deve permitir o cadastro de múltiplas vacinas com o mesmo número de doses."""
+        """Deve permitir o cadastro de múltiplas vacinas com mesmo número de doses."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         client.post("/vacinas/", json={"nome": "Febre Amarela", "doses": 1})
 
@@ -319,7 +311,7 @@ class TestVacinaIntegration:
     def test_deletar_e_verificar_lista(self):
         """Deve remover a vacina da lista após exclusão."""
         # Create BCG
-        response1 = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
+        client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         # Create Hepatite B and get its ID
         response2 = client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
         vacina_id = response2.json()["id"]
@@ -330,23 +322,31 @@ class TestVacinaIntegration:
         # Get remaining vaccines
         response = client.get("/vacinas/")
         vacinas = response.json()
-        
         # Should only have BCG left
         assert len(vacinas) == 1
-        assert vacinas[0]["nome"] == "BCG"  # Changed from "Hepatite B" to "BCG"
+        assert vacinas[0]["nome"] == "BCG"
 
     @pytest.mark.parametrize("doses_invalidas", [0, -1, -5, 11, 20, 100])
     def test_doses_invalidas_parametrizado(self, doses_invalidas):
         """Deve rejeitar valores inválidos para o número de doses."""
-        response = client.post("/vacinas/", json={"nome": "Teste", "doses": doses_invalidas})
+        response = client.post(
+            "/vacinas/",
+            json={"nome": "Teste", "doses": doses_invalidas}
+        )
         assert response.status_code == 422
 
     def test_limites_doses_validas(self):
-        """Deve aceitar valores nos limites válidos para o número de doses (1 a 10)."""
-        response_min = client.post("/vacinas/", json={"nome": "Dose Mínima", "doses": 1})
+        """Deve aceitar valores nos limites válidos para número de doses (1 a 10)."""
+        response_min = client.post(
+            "/vacinas/",
+            json={"nome": "Dose Mínima", "doses": 1}
+        )
         assert response_min.status_code == 201
 
-        response_max = client.post("/vacinas/", json={"nome": "Dose Máxima", "doses": 10})
+        response_max = client.post(
+            "/vacinas/",
+            json={"nome": "Dose Máxima", "doses": 10}
+        )
         assert response_max.status_code == 201
 
     def test_nome_muito_longo(self):

@@ -1,8 +1,4 @@
-"""Testes unitários para o modelo de Usuário.
-
-Este módulo contém testes para a classe Usuario, verificando o comportamento
-esperado do modelo de dados, incluindo validações e operações CRUD básicas.
-"""
+"""Testes unitários para o modelo de Usuário."""
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,11 +9,7 @@ from app.Usuario.model import Usuario
 
 
 class TestUsuarioModel:
-    """Testes para o modelo de Usuário.
-
-    Esta classe contém testes que verificam o comportamento do modelo Usuario,
-    incluindo criação, validação, consulta e exclusão de registros.
-    """
+    """Testes para o modelo de Usuário."""
 
     @pytest.fixture
     def engine(self):

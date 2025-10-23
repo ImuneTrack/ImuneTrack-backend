@@ -1,9 +1,11 @@
 """ Modelo de Histórico Vacinal """
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Date
-from sqlalchemy.orm import relationship
-from app.database import Base
 from datetime import datetime
 import enum
+
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, Text
+from sqlalchemy.orm import relationship
+
+from app.database import Base
 
 
 class StatusDose(str, enum.Enum):
@@ -12,35 +14,29 @@ class StatusDose(str, enum.Enum):
     APLICADA = "aplicada"
     ATRASADA = "atrasada"
     CANCELADA = "cancelada"
+
 class HistoricoVacinal(Base):
-    """ Modelo de Histórico Vacinal """
+    """Modelo de Histórico Vacinal."""
     __tablename__ = "historico_vacinal"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
-    vacina_id = Column(Integer, ForeignKey("vacinas.id", ondelete="CASCADE"), nullable=False, index=True)
-
-    # Informações da dose
-    numero_dose = Column(Integer, nullable=False)  # 1, 2, 3, etc.
-    status = Column(Enum(StatusDose), default=StatusDose.PENDENTE, nullable=False, index=True)
-
-    # Datas
-    data_aplicacao = Column(Date, nullable=True, index=True)  # Data em que foi aplicada
-    data_prevista = Column(Date, nullable=True)  # Data prevista para aplicação
-
-    # Informações adicionais
-    lote = Column(String(50), nullable=True)  # Lote da vacina
-    local_aplicacao = Column(String(200), nullable=True)  # Local onde foi aplicada
-    profissional = Column(String(200), nullable=True)  # Nome do profissional
-    observacoes = Column(String(500), nullable=True)  # Observações gerais
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
+    vacina_id = Column(Integer, ForeignKey('vacinas.id'), nullable=False)
+    numero_dose = Column(Integer, nullable=False)
+    status = Column(Enum(StatusDose), default=StatusDose.PENDENTE, nullable=False)
+    data_aplicacao = Column(Date, nullable=True)
+    data_prevista = Column(Date, nullable=True)
+    lote = Column(String(50), nullable=True)
+    local_aplicacao = Column(String(100), nullable=True)
+    profissional = Column(String(100), nullable=True)
+    observacoes = Column(Text, nullable=True)
+    created_at = Column(Date, default=datetime.utcnow, nullable=False)
+    updated_at = Column(Date, default=datetime.utcnow,
+    onupdate=datetime.utcnow, nullable=False)
 
     # Relacionamentos
-    usuario = relationship("Usuario", back_populates="historico_vacinal")
     vacina = relationship("Vacina", back_populates="historico_vacinal")
+    usuario = relationship("Usuario", back_populates="historico_vacinal")
 
     def __repr__(self) -> str:
         return (f"<HistoricoVacinal(id={self.id}, usuario_id={self.usuario_id}, "

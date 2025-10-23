@@ -1,7 +1,7 @@
 """ arquivo de configuração para os testes """
 import os
 import pytest
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.database import SessionLocal, Base, engine
 
@@ -21,7 +21,7 @@ else:
 
 # Cria engine e sessão
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+testingsessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(scope="session")
 # Cria o banco de dados para os testes
@@ -31,14 +31,12 @@ def db_engine():
     yield engine
     Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture()
 # Fornece uma sessão de banco de dados para cada teste
-def db_session(db_engine: Engine):
-    """ Fornece uma sessão de banco de dados para cada teste."""
-    Base.metadata.create_all(bind=engine)
+@pytest.fixture()
+def db_session():
+    """Fornece uma sessão de banco de dados para cada teste."""
     session = SessionLocal()
     try:
         yield session
     finally:
         session.close()
-        Base.metadata.drop_all(bind=engine)

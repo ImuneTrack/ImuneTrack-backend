@@ -1,59 +1,91 @@
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, validator
+"""Schemas Pydantic para validação de dados da API."""
 from datetime import datetime, date
 from enum import Enum
+from typing import Optional
 
-# ==================== ENUMS ====================
+from pydantic import BaseModel, EmailStr, Field, validator
+
 class StatusDoseEnum(str, Enum):
+    """Enum para status de doses de vacinas."""
+
     PENDENTE = "pendente"
     APLICADA = "aplicada"
     ATRASADA = "atrasada"
     CANCELADA = "cancelada"
 
-# ==================== SCHEMAS DE VACINA ====================
-
 class VacinaBase(BaseModel):
     """Schema base para Vacina."""
-    nome: str = Field(..., min_length=1, max_length=100, description="Nome da vacina")
-    doses: int = Field(..., gt=0, le=10, description="Número de doses necessárias")
 
+    nome: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Nome da vacina"
+    )
+    doses: int = Field(
+        ...,
+        gt=0,
+        le=10,
+        description="Número de doses necessárias"
+    )
 
+# pylint: disable=too-few-public-methods
 class VacinaCreate(VacinaBase):
     """Schema para criação de Vacina."""
-    pass
 
 
 class VacinaUpdate(BaseModel):
     """Schema para atualização de Vacina."""
+
     nome: Optional[str] = Field(None, min_length=1, max_length=100)
     doses: Optional[int] = Field(None, gt=0, le=10)
 
 
 class VacinaResponse(VacinaBase):
     """Schema para resposta de Vacina."""
+
     id: int
 
     class Config:
+        """Configuração do Pydantic."""
+
         from_attributes = True
+
 
 class UsuarioBase(BaseModel):
     """Schema base para Usuario."""
-    nome: str = Field(..., min_length=1, max_length=100, description="Nome completo", example="Alice Silva")
-    email: EmailStr = Field(..., description="Email válido", example="alice@teste.com")
+
+    nome: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Nome completo",
+        example="Alice Silva"
+    )
+    email: EmailStr = Field(
+        ...,
+        description="Email válido",
+        example="alice@teste.com"
+    )
 
     @validator('nome')
+    @classmethod
     def nome_nao_vazio(cls, v):
+        """Valida que nome não é apenas espaços."""
         if not v.strip():
             raise ValueError('Nome não pode ser vazio')
         return v.strip()
 
     @validator('email')
+    @classmethod
     def email_lowercase(cls, v):
+        """Converte email para minúsculas."""
         return v.lower()
 
 
 class UsuarioCreate(UsuarioBase):
     """Schema para criação de Usuario."""
+
     senha: str = Field(
         ...,
         min_length=6,
@@ -62,7 +94,9 @@ class UsuarioCreate(UsuarioBase):
     )
 
     @validator('senha')
+    @classmethod
     def senha_forte(cls, v):
+        """Valida força da senha."""
         if len(v) < 6:
             raise ValueError('Senha deve ter pelo menos 6 caracteres')
         if len(v) > 72:
@@ -76,50 +110,74 @@ class UsuarioCreate(UsuarioBase):
 
 class UsuarioUpdate(BaseModel):
     """Schema para atualização de Usuario."""
+
     nome: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
     senha: Optional[str] = Field(None, min_length=6, max_length=72)
 
+    @validator('nome')
+    @classmethod
     def nome_nao_vazio(cls, v):
         """Valida que nome não é apenas espaços."""
         if v is not None and (not v or not v.strip()):
             raise ValueError('Nome não pode ser vazio')
         return v.strip() if v else v
-    
+
+    @validator('email')
+    @classmethod
     def email_lowercase(cls, v):
         """Converte email para minúsculas."""
         return v.lower() if v else v
 
 
+# pylint: disable=too-few-public-methods
 class UsuarioResponse(UsuarioBase):
+    """Schema para resposta de Usuario."""
+
     id: int
 
     class Config:
+        """Configuração do Pydantic."""
+
         from_attributes = True
 
 
 # ==================== SCHEMAS DE ERRO ====================
 
 class ErrorResponse(BaseModel):
+    """Schema para respostas de erro."""
+
     detail: str = Field(..., description="Descrição do erro")
 
 
 class MessageResponse(BaseModel):
+    """Schema para mensagens de sucesso."""
+
     message: str = Field(..., description="Mensagem de sucesso")
+
 
 # ==================== SCHEMAS DE HISTÓRICO VACINAL ====================
 class HistoricoVacinalBase(BaseModel):
+    """Schema base para Histórico Vacinal."""
+
     vacina_id: int = Field(..., description="ID da vacina")
     numero_dose: int = Field(..., ge=1, description="Número da dose (1, 2, 3...)")
     status: StatusDoseEnum = Field(default=StatusDoseEnum.PENDENTE)
-    data_aplicacao: Optional[date] = Field(None, description="Data em que a dose foi aplicada")
-    data_prevista: Optional[date] = Field(None, description="Data prevista para aplicação")
+    data_aplicacao: Optional[date] = Field(
+        None,
+        description="Data em que a dose foi aplicada"
+    )
+    data_prevista: Optional[date] = Field(
+        None,
+        description="Data prevista para aplicação"
+    )
     lote: Optional[str] = Field(None, max_length=50)
     local_aplicacao: Optional[str] = Field(None, max_length=200)
     profissional: Optional[str] = Field(None, max_length=200)
     observacoes: Optional[str] = Field(None, max_length=500)
 
 
+# pylint: disable=too-few-public-methods, unnecessary-pass
 class HistoricoVacinalCreate(HistoricoVacinalBase):
     """Schema para criar um novo registro no histórico."""
     pass
@@ -127,6 +185,7 @@ class HistoricoVacinalCreate(HistoricoVacinalBase):
 
 class HistoricoVacinalUpdate(BaseModel):
     """Schema para atualizar um registro no histórico."""
+
     numero_dose: Optional[int] = Field(None, ge=1)
     status: Optional[StatusDoseEnum] = None
     data_aplicacao: Optional[date] = None
@@ -139,6 +198,7 @@ class HistoricoVacinalUpdate(BaseModel):
 
 class HistoricoVacinalResponse(HistoricoVacinalBase):
     """Schema para resposta com dados do histórico."""
+
     id: int
     usuario_id: int
     vacina_nome: str
@@ -146,11 +206,14 @@ class HistoricoVacinalResponse(HistoricoVacinalBase):
     updated_at: datetime
 
     class Config:
+        """Configuração do Pydantic."""
+
         from_attributes = True
 
 
 class HistoricoVacinalCompleto(BaseModel):
     """Schema com informações completas incluindo dados da vacina."""
+
     id: int
     usuario_id: int
     vacina_id: int
@@ -168,19 +231,25 @@ class HistoricoVacinalCompleto(BaseModel):
     updated_at: datetime
 
     class Config:
+        """Configuração do Pydantic."""
+
         from_attributes = True
 
 
+# pylint: disable=too-few-public-methods
 class HistoricoFiltros(BaseModel):
     """Filtros para busca no histórico vacinal."""
+
     ano: Optional[int] = Field(None, ge=1900, le=2100)
     vacina_id: Optional[int] = None
     status: Optional[StatusDoseEnum] = None
     mes: Optional[int] = Field(None, ge=1, le=12)
 
 
+# pylint: disable=too-few-public-methods
 class EstatisticasHistorico(BaseModel):
     """Estatísticas do histórico vacinal."""
+
     total_doses: int
     doses_aplicadas: int
     doses_pendentes: int

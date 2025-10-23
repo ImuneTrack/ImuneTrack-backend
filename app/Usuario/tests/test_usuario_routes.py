@@ -1,8 +1,4 @@
-"""Testes de rotas para o módulo de usuários.
-
-Este módulo contém testes para as rotas da API de usuários,
-verificando o comportamento esperado de cada endpoint.
-"""
+"""Testes de rotas para o módulo de usuários."""
 
 from unittest.mock import Mock, patch
 
@@ -238,6 +234,7 @@ class TestUsuarioView:
         assert response.status_code == 401
         assert "incorretos" in response.json()["detail"]
 
+# pylint: disable=unused-argument
     @pytest.mark.parametrize("endpoint,method", [
         ("/usuarios/", "get"),
         ("/usuarios/1", "get"),

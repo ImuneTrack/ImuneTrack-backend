@@ -7,13 +7,7 @@ from app.database import Base
 
 
 class Vacina(Base):
-    """Modelo que representa uma vacina no sistema.
-    
-    Atributos:
-        id: Identificador único da vacina
-        nome: Nome da vacina (único)
-        doses: Número de doses necessárias
-    """
+    """Modelo que representa uma vacina no sistema."""
     __tablename__ = "vacinas"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -23,19 +17,11 @@ class Vacina(Base):
     historico_vacinal = relationship("HistoricoVacinal", back_populates="vacina")
 
     def __repr__(self) -> str:
-        """Retorna uma representação em string do objeto Vacina.
-        
-        Returns:
-            str: Representação da vacina
-        """
+        """Retorna uma representação em string do objeto Vacina."""
         return f"<Vacina(id={self.id}, nome='{self.nome}', doses={self.doses})>"
 
     def to_dict(self) -> dict:
-        """Converte o objeto Vacina para um dicionário.
-        
-        Returns:
-            dict: Dicionário com os dados da vacina
-        """
+        """Converte o objeto Vacina para um dicionário."""
         return {
             "id": self.id,
             "nome": self.nome,

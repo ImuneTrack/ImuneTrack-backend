@@ -1,3 +1,4 @@
+"""Módulo de configuração do banco de dados."""
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -9,14 +10,21 @@ if ENV == "test":
 else:
     DATABASE_URL = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg2://imunetrack_user:imunetrack_pass@db:5432/imunetrack_user"
+        "postgresql+psycopg2://imunetrack_user:imunetrack_pass@db:5432/"
+        "imunetrack"
     )
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if ENV == "test" else {})
+# Configuração do engine com suporte para SQLite em testes
+connect_args = {"check_same_thread": False} if ENV == "test" else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+
+# pylint: disable=invalid-name
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+
 def get_db():
+    """Gerenciador de contexto para sessões do banco de dados."""
     db = SessionLocal()
     try:
         yield db

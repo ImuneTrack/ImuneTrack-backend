@@ -1,8 +1,4 @@
-"""Testes de integração para o módulo de usuários.
-
-Este módulo contém testes de integração que verificam o comportamento
-do sistema como um todo, incluindo rotas, controladores e modelos.
-"""
+"""Testes de integração para o módulo de usuários."""
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -30,6 +26,7 @@ def setup_module_db():
     db.close()
 
 
+# pylint: disable=too-many-public-methods
 class TestUsuarioIntegration:
     """Testes de integração para o módulo de usuários."""
 
@@ -91,7 +88,6 @@ class TestUsuarioIntegration:
         assert "id" in data
         assert data["email"] == "teste@teste.com"
 
-
     def test_login_credenciais_invalidas(self):
         """Deve rejeitar login com credenciais incorretas."""
         client.post("/usuarios/", json={
@@ -131,7 +127,11 @@ class TestUsuarioIntegration:
 
         response = client.put(
             f"/usuarios/{usuario_id}",
-            json={"nome": "Alice Silva", "email": "alice.silva@teste.com"})
+            json={
+                "nome": "Alice Silva",
+                "email": "alice.silva@teste.com"
+            }
+        )
         assert response.status_code == 200
         assert response.json()["nome"] == "Alice Silva"
 
@@ -162,9 +162,21 @@ class TestUsuarioIntegration:
 
     def test_persistencia_entre_requisicoes(self):
         """Deve persistir usuários entre requisições."""
-        client.post("/usuarios/", json={"nome": "Alice", "email": "alice@teste.com", "senha": "senha123"})
-        client.post("/usuarios/", json={"nome": "Bob", "email": "bob@teste.com", "senha": "senha456"})
-        client.post("/usuarios/", json={"nome": "Carlos", "email": "carlos@teste.com", "senha": "senha789"})
+        client.post("/usuarios/", json={
+            "nome": "Alice",
+            "email": "alice@teste.com",
+            "senha": "senha123"
+        })
+        client.post("/usuarios/", json={
+            "nome": "Bob",
+            "email": "bob@teste.com",
+            "senha": "senha456"
+        })
+        client.post("/usuarios/", json={
+            "nome": "Carlos",
+            "email": "carlos@teste.com",
+            "senha": "senha789"
+        })
 
         for _ in range(3):
             response = client.get("/usuarios/")
@@ -190,7 +202,7 @@ class TestUsuarioIntegration:
             "nome": "Alice",
             "email": "alice@teste.com",
             "senha": "senha123"
-            })
+        })
 
         usuario = response.json()
         assert "senha" not in usuario
@@ -323,7 +335,7 @@ class TestUsuarioIntegration:
             "email": "alice@teste.com",
             "senha": "senha123"
         })
-        response2 = client.post("/usuarios/", json={
+        client.post("/usuarios/", json={
             "nome": "Bob",
             "email": "bob@teste.com",
             "senha": "senha456"

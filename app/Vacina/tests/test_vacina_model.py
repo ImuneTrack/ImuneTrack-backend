@@ -1,19 +1,11 @@
-"""Testes unitários para o modelo de Vacina.
-
-Este módulo contém testes para validar o comportamento do modelo Vacina,
-incluindo criação, validação e serialização de objetos.
-"""
+"""Testes unitários para o modelo de Vacina."""
 
 import pytest
 from app.Vacina.model import Vacina
 
 
 class TestVacinaModel:
-    """Testes para o modelo Vacina.
-    
-    Esta classe contém testes para validar o comportamento do modelo Vacina,
-    incluindo criação, validação e serialização de objetos.
-    """
+    """Testes para o modelo Vacina."""
 
     def test_criacao_vacina(self):
         """Deve criar uma instância válida de Vacina."""
