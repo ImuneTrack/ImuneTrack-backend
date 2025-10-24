@@ -1,35 +1,49 @@
+"""Controlador para operações relacionadas a vacinas."""
+
 from typing import List, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
 from app.Vacina.model import Vacina
 
 
 class VacinaValidator:
+    """Classe auxiliar para validação de dados de vacina."""
+
     @staticmethod
     def validar_nome(nome: str) -> bool:
-        return nome and len(nome.strip()) > 0 and len(nome) <= 100
+        """Valida o nome da vacina."""
+        return bool(nome and 0 < len(nome.strip())) <= 100
 
     @staticmethod
     def validar_doses(doses: int) -> bool:
-        return doses > 0 and doses <= 10
+        """Valida o número de doses da vacina."""
+        return 0 < doses <= 10
 
 
 class VacinaController:
+    """Controlador para operações CRUD de vacinas."""
+
     @staticmethod
     def listar_todas(db: Session) -> List[Vacina]:
+        """Lista todas as vacinas cadastradas."""
         return db.query(Vacina).all()
 
     @staticmethod
     def buscar_por_id(db: Session, vacina_id: int) -> Optional[Vacina]:
+        """Busca uma vacina pelo ID."""
         return db.query(Vacina).filter(Vacina.id == vacina_id).first()
 
     @staticmethod
     def buscar_por_nome(db: Session, nome: str) -> Optional[Vacina]:
+        """Busca uma vacina pelo nome."""
         return db.query(Vacina).filter(Vacina.nome == nome).first()
 
     @staticmethod
     def criar(db: Session, nome: str, doses: int) -> Vacina:
+        """Cria uma nova vacina."""
         # Validações
         if not VacinaValidator.validar_nome(nome):
             raise HTTPException(
@@ -71,6 +85,7 @@ class VacinaController:
         nome: Optional[str] = None,
         doses: Optional[int] = None
     ) -> Vacina:
+        """Atualiza os dados de uma vacina existente."""
         vacina = VacinaController.buscar_por_id(db, vacina_id)
         if not vacina:
             raise HTTPException(
@@ -116,6 +131,7 @@ class VacinaController:
 
     @staticmethod
     def deletar(db: Session, vacina_id: int) -> bool:
+        """Remove uma vacina do sistema."""
         vacina = VacinaController.buscar_por_id(db, vacina_id)
         if not vacina:
             raise HTTPException(
@@ -129,5 +145,5 @@ class VacinaController:
 
     @staticmethod
     def buscar_por_doses(db: Session, doses: int) -> List[Vacina]:
+        """Busca vacinas pelo número de doses."""
         return db.query(Vacina).filter(Vacina.doses == doses).all()
-

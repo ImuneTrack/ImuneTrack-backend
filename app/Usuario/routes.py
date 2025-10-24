@@ -1,6 +1,8 @@
+"""Módulo de rotas para gerenciamento de usuários."""
 from typing import List
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.schemas import UsuarioCreate, UsuarioResponse, UsuarioUpdate, ErrorResponse
 from app.Usuario.controller import UsuarioController
@@ -17,6 +19,7 @@ router = APIRouter(prefix="/usuarios", tags=["Usuários"])
     description="Retorna a lista completa de usuários cadastrados no sistema"
 )
 async def listar_usuarios(db: Session = Depends(get_db)):
+    """Lista todos os usuários cadastrados no sistema."""
     usuarios = UsuarioController.listar_todos(db)
     return usuarios
 
@@ -30,6 +33,7 @@ async def listar_usuarios(db: Session = Depends(get_db)):
     description="Retorna os dados de um usuário específico"
 )
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    """Busca um usuário pelo ID."""
     usuario = UsuarioController.buscar_por_id(db, usuario_id)
     if not usuario:
         raise HTTPException(
@@ -51,6 +55,7 @@ async def cadastrar_usuario(
     usuario: UsuarioCreate,
     db: Session = Depends(get_db)
 ):
+    """Cria um novo usuário no sistema."""
     novo_usuario = UsuarioController.criar(
         db, usuario.nome, usuario.email, usuario.senha
     )
@@ -70,6 +75,7 @@ async def atualizar_usuario(
     usuario: UsuarioUpdate,
     db: Session = Depends(get_db)
 ):
+    """Atualiza os dados de um usuário existente."""
     usuario_atualizado = UsuarioController.atualizar(
         db, usuario_id, usuario.nome, usuario.email, usuario.senha
     )
@@ -84,6 +90,7 @@ async def atualizar_usuario(
     description="Remove um usuário do sistema"
 )
 async def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    """Remove um usuário do sistema."""
     UsuarioController.deletar(db, usuario_id)
     return None
 
@@ -97,6 +104,7 @@ async def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     description="Valida email e senha do usuário"
 )
 async def login(email: str, senha: str, db: Session = Depends(get_db)):
+    """Autentica um usuário."""
     usuario = UsuarioController.autenticar(db, email, senha)
     if not usuario:
         raise HTTPException(

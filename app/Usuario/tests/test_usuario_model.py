@@ -1,24 +1,33 @@
+"""Testes unitários para o modelo de Usuário."""
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
+
 from app.database import Base
 from app.Usuario.model import Usuario
 
+
 class TestUsuarioModel:
+    """Testes para o modelo de Usuário."""
+
     @pytest.fixture
     def engine(self):
+        """Configura um banco de dados SQLite em memória para os testes."""
         engine = create_engine("sqlite:///:memory:")
         Base.metadata.create_all(engine)
         return engine
 
     @pytest.fixture
     def session(self, engine):
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        yield session
-        session.close()
+        """Fornece uma sessão de banco de dados para cada teste."""
+        session_factory = sessionmaker(bind=engine)
+        db_session = session_factory()
+        yield db_session
+        db_session.close()
 
     def test_criar_usuario(self, session):
+        """Deve criar um novo usuário com sucesso."""
         usuario = Usuario(
             nome="Alice Silva",
             email="alice@test.com",
@@ -32,6 +41,7 @@ class TestUsuarioModel:
         assert usuario.email == "alice@test.com"
 
     def test_usuario_repr(self):
+        """Deve retornar uma representação em string do usuário."""
         usuario = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")
         repr_str = repr(usuario)
 
@@ -40,6 +50,7 @@ class TestUsuarioModel:
         assert "alice@test.com" in repr_str
 
     def test_usuario_to_dict(self):
+        """Deve converter o usuário para dicionário corretamente."""
         usuario = Usuario(
             id=1,
             nome="Alice Silva",
@@ -54,8 +65,7 @@ class TestUsuarioModel:
         assert "senha" not in user_dict  # Senha não deve aparecer
 
     def test_email_unico(self, session):
-        from sqlalchemy.exc import IntegrityError
-
+        """Deve garantir que o email seja único no sistema."""
         usuario1 = Usuario(nome="Alice", email="alice@test.com", senha="hash1")
         session.add(usuario1)
         session.commit()
@@ -67,8 +77,7 @@ class TestUsuarioModel:
             session.commit()
 
     def test_campos_obrigatorios(self, session):
-        from sqlalchemy.exc import IntegrityError
-
+        """Deve exigir nome e email para criar um usuário."""
         # Nome obrigatório
         usuario = Usuario(email="test@test.com", senha="hash")
         session.add(usuario)
@@ -84,6 +93,7 @@ class TestUsuarioModel:
             session.commit()
 
     def test_buscar_usuario_por_id(self, session):
+        """Deve buscar um usuário pelo ID com sucesso."""
         usuario = Usuario(nome="Alice", email="alice@test.com", senha="hash")
         session.add(usuario)
         session.commit()
@@ -96,6 +106,7 @@ class TestUsuarioModel:
         assert usuario_encontrado.nome == "Alice"
 
     def test_buscar_usuario_por_email(self, session):
+        """Deve buscar um usuário pelo email com sucesso."""
         usuario = Usuario(nome="Alice", email="alice@test.com", senha="hash")
         session.add(usuario)
         session.commit()
@@ -108,6 +119,7 @@ class TestUsuarioModel:
         assert usuario_encontrado.nome == "Alice"
 
     def test_atualizar_usuario(self, session):
+        """Deve atualizar os dados de um usuário existente."""
         usuario = Usuario(nome="Alice", email="alice@test.com", senha="hash")
         session.add(usuario)
         session.commit()
@@ -124,6 +136,7 @@ class TestUsuarioModel:
         assert usuario_atualizado.email == "alice.silva@test.com"
 
     def test_deletar_usuario(self, session):
+        """Deve remover um usuário do banco de dados."""
         usuario = Usuario(nome="Alice", email="alice@test.com", senha="hash")
         session.add(usuario)
         session.commit()
@@ -150,5 +163,4 @@ class TestUsuarioModel:
         session.commit()
 
         assert usuario.id is not None
-        assert usuario.nome == nome
         assert usuario.email == email

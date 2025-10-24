@@ -1,11 +1,17 @@
+"""Módulo de controle para operações relacionadas a usuários.
+
+Este módulo contém a lógica de negócio para operações CRUD de usuários,
+incluindo validação de dados e manipulação de senhas seguras.
+"""
+import re
 from typing import List, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
-import re
-from app.Usuario.model import Usuario  # ← Import correto do model
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from app.Usuario.model import Usuario
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -15,7 +21,15 @@ class UsuarioController:
 
     @staticmethod
     def _hash_senha(senha: str) -> str:
-        """Gera hash da senha usando bcrypt."""
+        """Gera um hash seguro para a senha fornecida."""
+        if isinstance(senha, bytes):
+            senha = senha.decode("utf-8")
+        # Se já for hash bcrypt, retorna direto
+        if senha.startswith("$2b$"):
+            return senha
+        # Trunca se maior que 72 bytes
+        if len(senha.encode("utf-8")) > 72:
+            senha = senha[:72]
         return pwd_context.hash(senha)
 
     @staticmethod

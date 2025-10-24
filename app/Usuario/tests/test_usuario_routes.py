@@ -1,15 +1,19 @@
-import pytest
-from fastapi.testclient import TestClient
+"""Testes de rotas para o módulo de usuários."""
+
 from unittest.mock import Mock, patch
+
+import pytest
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
+
 from app.main import app
 from app.Usuario.model import Usuario
-from app.Usuario.routes import router
-from fastapi import HTTPException
 
 client = TestClient(app)
 
 
 class TestUsuarioView:
+    """Testes de rotas para o módulo de usuários."""
     @patch('app.Usuario.routes.UsuarioController.listar_todos')
     @patch('app.Usuario.routes.get_db')
     def test_listar_usuarios_vazio(self, mock_get_db, mock_listar):
@@ -29,7 +33,6 @@ class TestUsuarioView:
         """Deve retornar lista de usuários."""
         mock_db = Mock()
         mock_get_db.return_value = mock_db
-        
         usuarios_mock = [
             Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash1"),
             Usuario(id=2, nome="Bob", email="bob@test.com", senha="hash2")
@@ -231,6 +234,7 @@ class TestUsuarioView:
         assert response.status_code == 401
         assert "incorretos" in response.json()["detail"]
 
+# pylint: disable=unused-argument
     @pytest.mark.parametrize("endpoint,method", [
         ("/usuarios/", "get"),
         ("/usuarios/1", "get"),
@@ -238,8 +242,12 @@ class TestUsuarioView:
         ("/usuarios/1", "put"),
         ("/usuarios/1", "delete"),
     ])
-    def test_endpoints_existem(self, endpoint, method):
-        """Deve verificar que todos os endpoints existem."""
-        # Testa que os endpoints estão registrados
+    def test_endpoints_existen(self, endpoint, method):
+        """Verifica se todos os endpoints esperados estão registrados.
+        
+        Args:
+            endpoint: Caminho do endpoint a ser verificado
+            method: Método HTTP do endpoint
+        """
         routes = [route.path for route in app.routes]
         assert endpoint in routes or "/usuarios/{usuario_id}" in routes
