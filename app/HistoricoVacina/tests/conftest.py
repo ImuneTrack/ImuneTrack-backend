@@ -5,7 +5,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.database import SessionLocal, Base, engine
 
-# Detecta ambiente (padrão = dev)
 ENV = os.getenv("ENV", "dev")
 
 # Define a URL de banco com base no ambiente
@@ -24,14 +23,12 @@ engine = create_engine(DATABASE_URL, connect_args=connect_args)
 testingsessionlocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(scope="session")
-# Cria o banco de dados para os testes
 def db_engine():
     """ Cria o banco de dados para os testes."""
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
 
-# Fornece uma sessão de banco de dados para cada teste
 @pytest.fixture()
 def db_session():
     """Fornece uma sessão de banco de dados para cada teste."""

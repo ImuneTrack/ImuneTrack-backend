@@ -95,7 +95,7 @@ class TestUsuarioView:
         assert response.status_code == 201
         data = response.json()
         assert data["nome"] == "Alice"
-        assert "senha" not in data  # Senha não deve retornar
+        assert "senha" not in data
 
     @patch('app.Usuario.routes.UsuarioController.criar')
     @patch('app.Usuario.routes.get_db')
@@ -186,6 +186,7 @@ class TestUsuarioView:
 
         assert response.status_code == 204
 
+# pylint: disable=duplicate-code
     @patch('app.Usuario.routes.UsuarioController.deletar')
     @patch('app.Usuario.routes.get_db')
     def test_deletar_usuario_nao_encontrado(self, mock_get_db, mock_deletar):
@@ -243,11 +244,6 @@ class TestUsuarioView:
         ("/usuarios/1", "delete"),
     ])
     def test_endpoints_existen(self, endpoint, method):
-        """Verifica se todos os endpoints esperados estão registrados.
-        
-        Args:
-            endpoint: Caminho do endpoint a ser verificado
-            method: Método HTTP do endpoint
-        """
+        """Verifica se todos os endpoints esperados estão registrados."""
         routes = [route.path for route in app.routes]
         assert endpoint in routes or "/usuarios/{usuario_id}" in routes

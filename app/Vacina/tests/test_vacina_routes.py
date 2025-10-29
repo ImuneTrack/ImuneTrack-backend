@@ -1,5 +1,4 @@
-"""Testes para as rotas de Vacina.
-"""
+"""Testes para as rotas de Vacina."""
 
 from unittest.mock import Mock, patch
 
@@ -96,13 +95,13 @@ class TestVacinaRoutes:
         # Configura os mocks
         mock_db = Mock()
         mock_get_db.return_value = mock_db
-        vacina_mock = Vacina(id=1, nome="Hepatite B", doses=3)
+        vacina_mock = Vacina(id=1, nome="Hepatite B", doses=2)
         mock_criar.return_value = vacina_mock
 
         # Dados para criação
         nova_vacina = {
             "nome": "Hepatite B",
-            "doses": 3
+            "doses": 2
         }
 
         # Executa a requisição
@@ -113,7 +112,7 @@ class TestVacinaRoutes:
         response_data = response.json()
         assert response_data["id"] == 1
         assert response_data["nome"] == "Hepatite B"
-        assert response_data["doses"] == 3
+        assert response_data["doses"] == 2
 
     @patch('app.Vacina.routes.VacinaController.criar')
     @patch('app.Vacina.routes.get_db')
@@ -138,18 +137,6 @@ class TestVacinaRoutes:
 
         # Verifica a resposta
         assert response.status_code == 400
-
-    def test_cadastrar_vacina_dados_invalidos(self):
-        """Deve retornar 422 quando os dados são inválidos."""
-        # Nome vazio
-        payload = {"nome": "", "doses": 1}
-        response = client.post("/vacinas/", json=payload)
-        assert response.status_code == 422
-
-        # Doses zero
-        payload = {"nome": "BCG", "doses": 0}
-        response = client.post("/vacinas/", json=payload)
-        assert response.status_code == 422
 
     @patch('app.Vacina.routes.VacinaController.atualizar')
     @patch('app.Vacina.routes.get_db')

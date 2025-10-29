@@ -78,6 +78,7 @@ class VacinaController:
                 detail="Erro ao criar vacina"
             ) from e
 
+# pylint: disable=duplicate-code
     @staticmethod
     def atualizar(
         db: Session,

@@ -12,6 +12,7 @@ from app.Vacina.model import Vacina
 from app.Usuario.model import Usuario
 from app.schemas import HistoricoVacinalCreate
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class HistoricoVacinalData:
     """Dados para criação/atualização de histórico vacinal."""
@@ -71,7 +72,7 @@ class HistoricoVacinalController:
         return historico
 
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-    #Lista o histórico vacinal de um usuário com filtros opcionais.
+    #Lista o histórico vacinal de um usuário.
     @staticmethod
     def listar_por_usuario(
         db: Session,
@@ -107,7 +108,6 @@ class HistoricoVacinalController:
             HistoricoVacinal.created_at.desc()
         ).all()
 
-    # Busca um registro específico do histórico vacinal por ID.
     @staticmethod
     def buscar_por_id(db: Session, historico_id: int, usuario_id: int):
         """Busca um histórico pelo ID."""
@@ -152,7 +152,7 @@ class HistoricoVacinalController:
             "id": historico.id,
             "usuario_id": historico.usuario_id,
             "vacina_id": historico.vacina_id,
-            "vacina_nome": historico.vacina.nome,  # Adiciona o nome da vacina no nível raiz
+            "vacina_nome": historico.vacina.nome,
             "numero_dose": historico.numero_dose,
             "status": historico.status,
             "data_aplicacao": historico.data_aplicacao,
@@ -164,7 +164,6 @@ class HistoricoVacinalController:
             "created_at": historico.created_at,
             "updated_at": historico.updated_at
         }
-
 
     @staticmethod
     def deletar_registro(db: Session, historico_id: int, usuario_id: int) -> bool:
@@ -197,7 +196,6 @@ class HistoricoVacinalController:
         doses_atrasadas = len([h for h in historico if h.status == StatusDose.ATRASADA])
         doses_canceladas = len([h for h in historico if h.status == StatusDose.CANCELADA])
 
-        # Agrupa por vacina
         vacinas_dict = {}
         for h in historico:
             if h.vacina_id not in vacinas_dict:
@@ -212,7 +210,6 @@ class HistoricoVacinalController:
         if v['aplicadas'] >= v['total_doses'])
         vacinas_incompletas = len(vacinas_dict) - vacinas_completas
 
-        # Próximas doses a serem aplicadas
         proximas = db.query(HistoricoVacinal).options(
             joinedload(HistoricoVacinal.vacina)
         ).filter(
@@ -267,7 +264,6 @@ class HistoricoVacinalController:
         if not historico:
             return None
 
-        # Update the fields
         historico.status = StatusDose.APLICADA
         historico.data_aplicacao = data_aplicacao
         historico.lote = lote
@@ -282,7 +278,7 @@ class HistoricoVacinalController:
             "id": historico.id,
             "usuario_id": historico.usuario_id,
             "vacina_id": historico.vacina_id,
-            "vacina_nome": historico.vacina.nome,  # Add this line
+            "vacina_nome": historico.vacina.nome,  
             "numero_dose": historico.numero_dose,
             "status": historico.status,
             "data_aplicacao": historico.data_aplicacao,
@@ -293,7 +289,6 @@ class HistoricoVacinalController:
             "observacoes": historico.observacoes,
             "created_at": historico.created_at,
             "updated_at": historico.updated_at,
-            # Keep the nested vacina object if needed by other parts of the code
             "vacina": {
                 "id": historico.vacina.id,
                 "nome": historico.vacina.nome,

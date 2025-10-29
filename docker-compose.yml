@@ -32,6 +32,7 @@ services:
     environment:
       - ENV=dev
       - DATABASE_URL=postgresql+psycopg2://imunetrack_user:imunetrack_pass@db:5432/imunetrack_user
+      - AUTH_SERVICE_URL=http://imunetrack-auth:8000
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -52,3 +53,7 @@ services:
 
 volumes:
   imunetrack_data:
+
+networks:
+  imunetrack-network:
+    external: true

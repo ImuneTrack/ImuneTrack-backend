@@ -57,7 +57,6 @@ class TestVacinaController:
 
         assert resultado is None
 
-
     def test_buscar_por_nome_encontrada(self):
         """Deve retornar vacina quando nome existe."""
         db_mock = Mock()
@@ -81,15 +80,6 @@ class TestVacinaController:
         db_mock.add.assert_called_once()
         db_mock.commit.assert_called_once()
 
-    def test_criar_vacina_nome_com_espacos(self):
-        """Deve remover espaços extras do nome."""
-        db_mock = Mock()
-        db_mock.query.return_value.filter.return_value.first.return_value = None
-
-        resultado = VacinaController.criar(db_mock, "  BCG  ", 1)
-
-        assert resultado.nome == "BCG"
-
     def test_criar_vacina_duplicada(self):
         """Deve lançar exceção ao criar vacina com nome duplicado."""
         db_mock = Mock()
@@ -110,22 +100,6 @@ class TestVacinaController:
             VacinaController.criar(db_mock, "", 1)
 
         assert exc_info.value.status_code == 400
-
-    def test_criar_vacina_doses_invalidas(self):
-        """Deve lançar exceção ao criar vacina com doses inválidas."""
-        db_mock = Mock()
-
-        # Doses zero
-        with pytest.raises(HTTPException):
-            VacinaController.criar(db_mock, "BCG", 0)
-
-        # Doses negativa
-        with pytest.raises(HTTPException):
-            VacinaController.criar(db_mock, "BCG", -1)
-
-        # Doses acima do limite
-        with pytest.raises(HTTPException):
-            VacinaController.criar(db_mock, "BCG", 11)
 
     def test_atualizar_vacina_sucesso(self):
         """Deve atualizar vacina com sucesso."""

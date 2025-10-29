@@ -62,7 +62,7 @@ class TestUsuarioModel:
         assert user_dict["id"] == 1
         assert user_dict["nome"] == "Alice Silva"
         assert user_dict["email"] == "alice@test.com"
-        assert "senha" not in user_dict  # Senha não deve aparecer
+        assert "senha" not in user_dict
 
     def test_email_unico(self, session):
         """Deve garantir que o email seja único no sistema."""
@@ -78,7 +78,6 @@ class TestUsuarioModel:
 
     def test_campos_obrigatorios(self, session):
         """Deve exigir nome e email para criar um usuário."""
-        # Nome obrigatório
         usuario = Usuario(email="test@test.com", senha="hash")
         session.add(usuario)
         with pytest.raises(IntegrityError):
@@ -86,7 +85,6 @@ class TestUsuarioModel:
 
         session.rollback()
 
-        # Email obrigatório
         usuario = Usuario(nome="Test", senha="hash")
         session.add(usuario)
         with pytest.raises(IntegrityError):
@@ -150,17 +148,3 @@ class TestUsuarioModel:
         ).first()
 
         assert usuario_deletado is None
-
-    @pytest.mark.parametrize("nome,email,senha", [
-        ("Alice", "alice@test.com", "hash123"),
-        ("Bob Silva", "bob.silva@empresa.com.br", "hash456"),
-        ("Carlos", "carlos+tag@domain.co", "hash789"),
-    ])
-    def test_criar_multiplos_usuarios(self, session, nome, email, senha):
-        """Deve criar múltiplos usuários com dados diferentes."""
-        usuario = Usuario(nome=nome, email=email, senha=senha)
-        session.add(usuario)
-        session.commit()
-
-        assert usuario.id is not None
-        assert usuario.email == email

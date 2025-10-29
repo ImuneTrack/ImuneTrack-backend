@@ -2,7 +2,7 @@
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, status, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, status, HTTPException, Path
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -49,19 +49,15 @@ async def listar_historico(
     db: Session = Depends(get_db)
 ):
     """Lista o histórico vacinal do usuário com filtros opcionais."""
-    # Converte string do enum para o enum do modelo
-    status_model = StatusDose(filtros.status_filtro.value) if filtros.status_filtro else None
-
     historico = HistoricoVacinalController.listar_por_usuario(
         db=db,
         usuario_id=usuario_id,
         ano=filtros.ano,
         mes=filtros.mes,
         vacina_id=filtros.vacina_id,
-        status_filtro=status_model
+        status_filtro=filtros.status_filtro
     )
 
-    # Converte para o formato de resposta completo
     resultado = []
     for h in historico:
         resultado.append({
@@ -109,6 +105,8 @@ async def obter_estatisticas(
     summary="Buscar registro específico do histórico",
     description="Retorna detalhes de um registro específico do histórico vacinal"
 )
+
+# pylint: disable=duplicate-code
 async def buscar_registro(
     usuario_id: int,
     historico_id: int,
@@ -155,8 +153,6 @@ async def criar_registro(
     db: Session = Depends(get_db)
 ):
     """criar registro no historico"""
-    status_model = StatusDose(historico.status.value)
-
     novo_registro = HistoricoVacinalController.criar_registro(
         db=db,
         usuario_id=usuario_id,
@@ -204,10 +200,8 @@ async def atualizar_registro(
     db: Session = Depends(get_db)
 ):
     """Atualiza um registro do histórico."""
-    # Convert Pydantic model to dict, excluding unset values
     update_data = historico.model_dump(exclude_unset=True)
 
-    # Convert status enum to model if present
     if 'status' in update_data and update_data['status'] is not None:
         update_data['status'] = StatusDose(update_data['status'].value)
 
