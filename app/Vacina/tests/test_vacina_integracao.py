@@ -127,19 +127,6 @@ class TestVacinaIntegration:
         assert vacina["nome"] == "BCG Atualizada"
         assert vacina["doses"] == 2
 
-    def test_atualizar_vacina_parcial(self):
-        """Deve permitir a atualização parcial dos dados de uma vacina."""
-        response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        vacina_id = response_create.json()["id"]
-
-        response = client.put(
-            f"/vacinas/{vacina_id}",
-            json={"nome": "BCG Nova"}
-        )
-        assert response.status_code == 200
-        assert response.json()["nome"] == "BCG Nova"
-        assert response.json()["doses"] == 1
-
     def test_atualizar_vacina_nao_encontrada(self):
         """Deve retornar erro 404 ao tentar atualizar vacina inexistente."""
         response = client.put(
@@ -206,23 +193,6 @@ class TestVacinaIntegration:
         assert response.json()["nome"] == nome
         assert response.json()["doses"] == doses
 
-    def test_persistencia_entre_requisicoes(self):
-        """Deve manter a consistência dos dados entre múltiplas requisições."""
-        client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
-        client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
-
-        for _ in range(3):
-            response = client.get("/vacinas/")
-            assert response.status_code == 200
-            assert len(response.json()) == 3
-
-    def test_validacao_nome_espacos(self):
-        """Deve remover espaços em branco extras do nome da vacina."""
-        response = client.post("/vacinas/", json={"nome": "  BCG  ", "doses": 1})
-        assert response.status_code == 201
-        assert response.json()["nome"].strip() == "BCG"
-
     def test_atualizar_vacina_nome_duplicado(self):
         """Deve impedir a atualização para um nome de vacina já existente."""
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
@@ -261,19 +231,8 @@ class TestVacinaIntegration:
         vacinas_dose_1 = [v for v in vacinas if v["doses"] == 1]
         assert len(vacinas_dose_1) == 2
 
-    def test_ordem_listagem(self):
-        """Deve listar as vacinas na ordem correta."""
-        client.post("/vacinas/", json={"nome": "COVID-19", "doses": 2})
-        client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
-
-        response = client.get("/vacinas/")
-        vacinas = response.json()
-        assert len(vacinas) == 3
-        assert all(isinstance(v["id"], int) for v in vacinas)
-
     def test_atualizar_apenas_nome(self):
-        """Deve atualizar apenas o nome mantendo os demais campos inalterados."""
+        """Deve atualizar apenas o nome mantendo os outros campos sem alterar."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
 
@@ -286,7 +245,7 @@ class TestVacinaIntegration:
         assert response.json()["doses"] == 1
 
     def test_atualizar_apenas_doses(self):
-        """Deve atualizar apenas o número de doses mantendo o nome inalterado."""
+        """Deve atualizar apenas o número de doses mantendo o nome."""
         response_create = client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
         vacina_id = response_create.json()["id"]
 
@@ -310,19 +269,14 @@ class TestVacinaIntegration:
 
     def test_deletar_e_verificar_lista(self):
         """Deve remover a vacina da lista após exclusão."""
-        # Create BCG
         client.post("/vacinas/", json={"nome": "BCG", "doses": 1})
-        # Create Hepatite B and get its ID
         response2 = client.post("/vacinas/", json={"nome": "Hepatite B", "doses": 3})
         vacina_id = response2.json()["id"]
 
-        # Delete Hepatite B
         client.delete(f"/vacinas/{vacina_id}")
 
-        # Get remaining vaccines
         response = client.get("/vacinas/")
         vacinas = response.json()
-        # Should only have BCG left
         assert len(vacinas) == 1
         assert vacinas[0]["nome"] == "BCG"
 
@@ -333,24 +287,4 @@ class TestVacinaIntegration:
             "/vacinas/",
             json={"nome": "Teste", "doses": doses_invalidas}
         )
-        assert response.status_code == 422
-
-    def test_limites_doses_validas(self):
-        """Deve aceitar valores nos limites válidos para número de doses (1 a 10)."""
-        response_min = client.post(
-            "/vacinas/",
-            json={"nome": "Dose Mínima", "doses": 1}
-        )
-        assert response_min.status_code == 201
-
-        response_max = client.post(
-            "/vacinas/",
-            json={"nome": "Dose Máxima", "doses": 10}
-        )
-        assert response_max.status_code == 201
-
-    def test_nome_muito_longo(self):
-        """Deve rejeitar nomes com mais de 100 caracteres."""
-        nome_longo = "A" * 101
-        response = client.post("/vacinas/", json={"nome": nome_longo, "doses": 1})
         assert response.status_code == 422

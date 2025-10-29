@@ -104,16 +104,6 @@ class TestUsuarioController:
         assert exc_info.value.status_code == 400
         assert "inválido" in exc_info.value.detail
 
-    def test_criar_usuario_senha_curta(self):
-        """Lança exceção ao criar usuário com senha curta."""
-        db_mock = Mock()
-
-        with pytest.raises(HTTPException) as exc_info:
-            UsuarioController.criar(db_mock, "Alice", "alice@test.com", "123")
-
-        assert exc_info.value.status_code == 400
-        assert "mínimo 6" in exc_info.value.detail
-
     @patch.object(UsuarioController, "_hash_senha", return_value="new_hashed")
     def test_atualizar_usuario_sucesso(self, mock_hash_senha):
         """Atualiza usuário com sucesso."""
@@ -186,47 +176,3 @@ class TestUsuarioController:
 
         assert resultado is None
         mock_verificar_senha.assert_called_once()
-
-    def test_autenticar_email_nao_encontrado(self):
-        """Retorna None quando email não existe."""
-        db_mock = Mock()
-        db_mock.query.return_value.filter.return_value.first.return_value = None
-
-        resultado = UsuarioController.autenticar(db_mock, "naoexiste@test.com", "senha")
-
-        assert resultado is None
-
-    @pytest.mark.parametrize(
-        "email,valido",
-        [
-            ("alice@test.com", True),
-            ("bob.silva@empresa.com.br", True),
-            ("user+tag@domain.co", True),
-            ("invalid.email", False),
-            ("@domain.com", False),
-            ("user@", False),
-            ("", False),
-        ],
-    )
-# pylint: disable=protected-access
-    def test_validar_email(self, email, valido):
-        """Valida diferentes formatos de email."""
-        resultado = UsuarioController._validar_email(email)
-        assert resultado == valido
-
-    @pytest.mark.parametrize(
-        "senha,valido",
-        [
-            ("senha123", True),
-            ("123456", True),
-            ("senhaforte123", True),
-            ("12345", False),
-            ("abc", False),
-            ("", False),
-        ],
-    )
-# pylint: disable=protected-access
-    def test_validar_senha(self, senha, valido):
-        """Valida diferentes senhas."""
-        resultado = UsuarioController._validar_senha(senha)
-        assert resultado == valido

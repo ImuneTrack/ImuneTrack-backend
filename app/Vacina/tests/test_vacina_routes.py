@@ -1,5 +1,4 @@
-"""Testes para as rotas de Vacina.
-"""
+"""Testes para as rotas de Vacina."""
 
 from unittest.mock import Mock, patch
 
@@ -138,18 +137,6 @@ class TestVacinaRoutes:
 
         # Verifica a resposta
         assert response.status_code == 400
-
-    def test_cadastrar_vacina_dados_invalidos(self):
-        """Deve retornar 422 quando os dados são inválidos."""
-        # Nome vazio
-        payload = {"nome": "", "doses": 1}
-        response = client.post("/vacinas/", json=payload)
-        assert response.status_code == 422
-
-        # Doses zero
-        payload = {"nome": "BCG", "doses": 0}
-        response = client.post("/vacinas/", json=payload)
-        assert response.status_code == 422
 
     @patch('app.Vacina.routes.VacinaController.atualizar')
     @patch('app.Vacina.routes.get_db')

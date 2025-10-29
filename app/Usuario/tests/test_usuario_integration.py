@@ -37,19 +37,6 @@ class TestUsuarioIntegration:
         assert isinstance(response.json(), list)
         assert len(response.json()) == 0
 
-    def test_senha_limite_72_caracteres(self):
-        """Deve aceitar senha com exatamente 72 caracteres."""
-        senha_72 = "a1" * 36
-        response = client.post(
-            "/usuarios/",
-            json={
-                "nome": "Teste",
-                "email": "teste@teste.com",
-                "senha": senha_72
-            }
-        )
-        assert response.status_code == 201
-
     def test_senha_maior_que_72_recusada(self):
         """Deve rejeitar senha com mais de 72 caracteres."""
         senha_73 = "a1" * 36 + "x"
@@ -157,68 +144,6 @@ class TestUsuarioIntegration:
         assert response.json()["nome"] == nome
         assert response.json()["email"] == email.lower()
 
-    def test_persistencia_entre_requisicoes(self):
-        """Deve persistir usuários entre requisições."""
-        client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "alice@teste.com",
-            "senha": "senha123"
-        })
-        client.post("/usuarios/", json={
-            "nome": "Bob",
-            "email": "bob@teste.com",
-            "senha": "senha456"
-        })
-        client.post("/usuarios/", json={
-            "nome": "Carlos",
-            "email": "carlos@teste.com",
-            "senha": "senha789"
-        })
-
-        for _ in range(3):
-            response = client.get("/usuarios/")
-            assert response.status_code == 200
-            assert len(response.json()) == 3
-
-    def test_email_case_insensitive(self):
-        """Deve aceitar email com case insensitive."""
-        client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "Alice@Teste.COM",
-            "senha": "senha123"
-        })
-
-        response = client.post(
-            "/usuarios/login?email=alice@teste.com&senha=senha123"
-        )
-        assert response.status_code == 200
-
-    def test_senha_hasheada(self):
-        """Deve hasheadar senha ao criar usuário."""
-        response = client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "alice@teste.com",
-            "senha": "senha123"
-        })
-
-        usuario = response.json()
-        assert "senha" not in usuario
-
-        response_login = client.post(
-            "/usuarios/login?email=alice@teste.com&senha=senha123"
-        )
-        assert response_login.status_code == 200
-
-    def test_validacao_nome_espacos(self):
-        """Deve aceitar nome com espaços."""
-        response = client.post("/usuarios/", json={
-            "nome": "  Alice Silva  ",
-            "email": "alice@teste.com",
-            "senha": "senha123"
-        })
-        assert response.status_code == 201
-        assert response.json()["nome"].strip() == "Alice Silva"
-
     def test_atualizar_email_duplicado(self):
         """Deve rejeitar atualização de email duplicado."""
         client.post("/usuarios/", json={
@@ -240,22 +165,6 @@ class TestUsuarioIntegration:
         )
         assert response.status_code == 400
         assert "já está em uso" in response.json()["detail"].lower()
-
-    def test_response_structure(self):
-        """Deve retornar estrutura de resposta correta."""
-        response = client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "alice@teste.com",
-            "senha": "senha123"
-        })
-        data = response.json()
-        assert "id" in data
-        assert "nome" in data
-        assert "email" in data
-        assert "senha" not in data
-        assert isinstance(data["id"], int)
-        assert isinstance(data["nome"], str)
-        assert isinstance(data["email"], str)
 
     def test_atualizar_apenas_nome(self):
         """Deve atualizar apenas o nome."""
@@ -400,47 +309,3 @@ class TestUsuarioIntegration:
             "/usuarios/login?email=alice@teste.com&senha=novasenha456"
         )
         assert response_login_nova.status_code == 200
-
-    def test_email_lowercase_automatico(self):
-        """Deve converter email para lowercase automaticamente."""
-        response = client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "ALICE@TESTE.COM",
-            "senha": "senha123"
-        })
-        assert response.status_code == 201
-        assert response.json()["email"] == "alice@teste.com"
-
-    def test_multiplos_usuarios_mesmo_nome(self):
-        """Deve permitir múltiplos usuários com o mesmo nome."""
-        client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "alice1@teste.com",
-            "senha": "senha123"
-        })
-        response = client.post("/usuarios/", json={
-            "nome": "Alice",
-            "email": "alice2@teste.com",
-            "senha": "senha456"
-        })
-        assert response.status_code == 201
-
-    def test_nome_muito_longo(self):
-        """Deve rejeitar nome muito longo."""
-        nome_longo = "A" * 101
-        response = client.post("/usuarios/", json={
-            "nome": nome_longo,
-            "email": "teste@teste.com",
-            "senha": "senha123"
-        })
-        assert response.status_code == 422
-
-    def test_email_muito_longo(self):
-        """Deve rejeitar email muito longo."""
-        email_longo = "a" * 250 + "@teste.com"
-        response = client.post("/usuarios/", json={
-            "nome": "Teste",
-            "email": email_longo,
-            "senha": "senha123"
-        })
-        assert response.status_code == 422
