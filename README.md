@@ -14,10 +14,8 @@ Microserviço principal do sistema **ImuneTrack**, responsável por gerenciar:
 - **FastAPI**
 - **SQLAlchemy**
 - **PostgreSQL**
-- **Alembic**
 - **Docker & Docker Compose**
 - **Pytest**
-- **Pydantic v2**
 
 ---
 
@@ -35,7 +33,6 @@ imunetrack-backend/
 │   ├── schemas/               # Schemas Pydantic
 │   └── tests/                 # Testes unitários e de integração
 │
-├── alembic/
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
