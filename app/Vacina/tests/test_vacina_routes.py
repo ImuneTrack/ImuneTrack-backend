@@ -96,13 +96,13 @@ class TestVacinaRoutes:
         # Configura os mocks
         mock_db = Mock()
         mock_get_db.return_value = mock_db
-        vacina_mock = Vacina(id=1, nome="Hepatite B", doses=3)
+        vacina_mock = Vacina(id=1, nome="Hepatite B", doses=2)
         mock_criar.return_value = vacina_mock
 
         # Dados para criação
         nova_vacina = {
             "nome": "Hepatite B",
-            "doses": 3
+            "doses": 2
         }
 
         # Executa a requisição
@@ -113,7 +113,7 @@ class TestVacinaRoutes:
         response_data = response.json()
         assert response_data["id"] == 1
         assert response_data["nome"] == "Hepatite B"
-        assert response_data["doses"] == 3
+        assert response_data["doses"] == 2
 
     @patch('app.Vacina.routes.VacinaController.criar')
     @patch('app.Vacina.routes.get_db')

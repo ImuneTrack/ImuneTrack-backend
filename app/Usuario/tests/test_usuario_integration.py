@@ -7,7 +7,7 @@ from app.Usuario.model import Usuario
 
 client = TestClient(app)
 
-
+# pylint: disable=duplicate-code
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
     """Configura o banco de dados para cada teste."""
@@ -39,7 +39,7 @@ class TestUsuarioIntegration:
 
     def test_senha_limite_72_caracteres(self):
         """Deve aceitar senha com exatamente 72 caracteres."""
-        senha_72 = "a1" * 36  # Exatamente 72 caracteres
+        senha_72 = "a1" * 36
         response = client.post(
             "/usuarios/",
             json={
@@ -52,7 +52,7 @@ class TestUsuarioIntegration:
 
     def test_senha_maior_que_72_recusada(self):
         """Deve rejeitar senha com mais de 72 caracteres."""
-        senha_73 = "a1" * 36 + "x"  # 73 caracteres
+        senha_73 = "a1" * 36 + "x"
         response = client.post(
             "/usuarios/",
             json={
@@ -65,7 +65,6 @@ class TestUsuarioIntegration:
 
     def test_login_sucesso(self):
         """Deve autenticar usuário com credenciais corretas."""
-        # Setup
         usuario_data = {
             "nome": "Teste",
             "email": "teste@teste.com",
@@ -73,7 +72,6 @@ class TestUsuarioIntegration:
         }
         client.post("/usuarios/", json=usuario_data)
 
-        # Test
         response = client.post(
             "/usuarios/login",
             params={
@@ -82,7 +80,6 @@ class TestUsuarioIntegration:
             }
         )
 
-        # Assert
         assert response.status_code == 200
         data = response.json()
         assert "id" in data

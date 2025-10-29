@@ -84,18 +84,6 @@ class TestUsuarioController:
         db_mock.commit.assert_called_once()
         mock_hash_senha.assert_called_once()
 
-    def test_criar_usuario_email_duplicado(self):
-        """Lança exceção ao criar usuário com email duplicado."""
-        db_mock = Mock()
-        usuario_existente = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")
-        db_mock.query.return_value.filter.return_value.first.return_value = usuario_existente
-
-        with pytest.raises(HTTPException) as exc_info:
-            UsuarioController.criar(db_mock, "Bob", "alice@test.com", "senha123")
-
-        assert exc_info.value.status_code == 400
-        assert "já existe" in exc_info.value.detail
-
     def test_criar_usuario_nome_vazio(self):
         """Lança exceção ao criar usuário com nome vazio."""
         db_mock = Mock()

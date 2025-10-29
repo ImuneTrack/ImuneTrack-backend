@@ -108,6 +108,7 @@ class UsuarioController:
                 detail="Erro ao criar usuário"
             ) from e
 
+# pylint: disable=duplicate-code
     @staticmethod
     def atualizar(
         db: Session,
@@ -169,6 +170,7 @@ class UsuarioController:
                 detail="Erro ao atualizar usuário"
             ) from e
 
+# pylint: disable=duplicate-code
     @staticmethod
     def deletar(db: Session, usuario_id: int) -> bool:
         """Deleta um usuário."""

@@ -186,6 +186,7 @@ class TestUsuarioView:
 
         assert response.status_code == 204
 
+# pylint: disable=duplicate-code
     @patch('app.Usuario.routes.UsuarioController.deletar')
     @patch('app.Usuario.routes.get_db')
     def test_deletar_usuario_nao_encontrado(self, mock_get_db, mock_deletar):

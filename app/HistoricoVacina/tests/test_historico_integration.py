@@ -1,8 +1,7 @@
 """Testes de integração para o histórico de vacinas."""
-import pytest
 from datetime import date
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 from app.main import app
 from app.database import get_db, SessionLocal, Base, engine
 from app.HistoricoVacina.model import HistoricoVacinal, StatusDose
@@ -15,6 +14,7 @@ def test_client():
     """Fornece um cliente de teste para a aplicação."""
     return TestClient(app)
 
+# pylint: disable=duplicate-code
 @pytest.fixture(scope="function")
 def db_session():
     """Cria e gerencia uma sessão de banco de dados para os testes."""
