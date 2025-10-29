@@ -101,9 +101,3 @@ Durante os testes, é utilizado um banco **SQLite em memória** para maior desem
 | `GET` | `/usuarios/{id}` | Busca dados de um usuário (via Auth) |
 
 ---
-
-## 📦 Deploy
-
-As imagens Docker são publicadas no GitLab Container Registry e utilizadas pelo ambiente de produção definido em `docker-compose.prod.yml`.
-
----
