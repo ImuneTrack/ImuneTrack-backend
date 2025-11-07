@@ -106,6 +106,8 @@ class UsuarioCreate(UsuarioBase):
         if not any(c.isalpha() for c in v):
             raise ValueError('Senha deve conter ao menos uma letra')
         return v
+    
+    is_admin: Optional[bool] = False
 
 
 class UsuarioUpdate(BaseModel):
@@ -114,6 +116,7 @@ class UsuarioUpdate(BaseModel):
     nome: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
     senha: Optional[str] = Field(None, min_length=6, max_length=72)
+    is_admin: Optional[bool] = False
 
     @validator('nome')
     @classmethod
@@ -135,6 +138,7 @@ class UsuarioResponse(UsuarioBase):
     """Schema para resposta de Usuario."""
 
     id: int
+    is_admin: bool
 
     class Config:
         """Configuração do Pydantic."""

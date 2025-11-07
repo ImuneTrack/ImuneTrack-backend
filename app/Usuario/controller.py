@@ -64,7 +64,7 @@ class UsuarioController:
         return db.query(Usuario).filter(Usuario.email == email).first()
 
     @staticmethod
-    def criar(db: Session, nome: str, email: str, senha: str) -> Usuario:
+    def criar(db: Session, nome: str, email: str, senha: str, is_admin: bool = False) -> Usuario:
         """Cria um novo usuário com validações e senha hasheada."""
         # Validações
         if not nome or len(nome.strip()) == 0:
@@ -94,7 +94,7 @@ class UsuarioController:
 
         # Cria usuário com senha hasheada
         senha_hash = UsuarioController._hash_senha(senha)
-        usuario = Usuario(nome=nome.strip(), email=email.lower(), senha=senha_hash)
+        usuario = Usuario(nome=nome.strip(), email=email.lower(), senha=senha_hash, is_admin=is_admin)
 
         try:
             db.add(usuario)
@@ -115,7 +115,8 @@ class UsuarioController:
         usuario_id: int,
         nome: Optional[str] = None,
         email: Optional[str] = None,
-        senha: Optional[str] = None
+        senha: Optional[str] = None,
+        is_admin: Optional[bool] = False,
     ) -> Usuario:
         """Atualiza um usuário existente."""
         usuario = UsuarioController.buscar_por_id(db, usuario_id)
@@ -158,6 +159,9 @@ class UsuarioController:
                     detail="Senha deve ter no mínimo 6 caracteres"
                 )
             usuario.senha = UsuarioController._hash_senha(senha)
+        
+        if is_admin is not None:
+            usuario.is_admin = is_admin
 
         try:
             db.commit()

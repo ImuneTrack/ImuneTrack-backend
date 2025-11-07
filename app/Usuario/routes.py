@@ -43,23 +43,10 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     return UsuarioResponse.from_orm(usuario)
 
 
-@router.post(
-    "/",
-    response_model=UsuarioResponse,
-    status_code=status.HTTP_201_CREATED,
-    responses={400: {"model": ErrorResponse}},
-    summary="Cadastrar novo usuário",
-    description="Cria um novo usuário no sistema com senha hasheada"
-)
-async def cadastrar_usuario(
-    usuario: UsuarioCreate,
-    db: Session = Depends(get_db)
-):
+@router.post("/", response_model=UsuarioResponse)
+async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     """Cria um novo usuário no sistema."""
-    novo_usuario = UsuarioController.criar(
-        db, usuario.nome, usuario.email, usuario.senha
-    )
-    return novo_usuario
+    return UsuarioController.criar(db, **usuario.dict())
 
 
 @router.put(
@@ -77,7 +64,7 @@ async def atualizar_usuario(
 ):
     """Atualiza os dados de um usuário existente."""
     usuario_atualizado = UsuarioController.atualizar(
-        db, usuario_id, usuario.nome, usuario.email, usuario.senha
+        db, usuario_id, usuario.nome, usuario.email, usuario.senha, is_admin=usuario.is_admin or False
     )
     return usuario_atualizado
 
