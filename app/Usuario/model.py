@@ -1,7 +1,7 @@
 """Módulo de modelo de dados para a entidade Usuário."""
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -15,6 +15,7 @@ class Usuario(Base):
     nome = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     senha = Column(String(255), nullable=False)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -34,8 +35,10 @@ class Usuario(Base):
         return {
             "id": self.id,
             "nome": self.nome,
-            "email": self.email
+            "email": self.email,
+            "is_admin": self.is_admin
         }
+    
     @property
     def senha_hash(self):
         """Getter para a senha do usuário."""
