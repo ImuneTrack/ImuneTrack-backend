@@ -10,3 +10,4 @@ pytest
 httpx
 bcrypt==4.3.0
 alembic
+APScheduler

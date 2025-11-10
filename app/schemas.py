@@ -2,6 +2,7 @@
 from datetime import datetime, date
 from enum import Enum
 from typing import Optional
+from app.HistoricoVacina.model import StatusDose
 
 from pydantic import BaseModel, EmailStr, Field, validator
 
@@ -183,8 +184,15 @@ class HistoricoVacinalBase(BaseModel):
 
 # pylint: disable=too-few-public-methods, unnecessary-pass
 class HistoricoVacinalCreate(HistoricoVacinalBase):
-    """Schema para criar um novo registro no histórico."""
-    pass
+    vacina_id: int
+    numero_dose: int
+    status: StatusDose = StatusDose.PENDENTE
+    data_aplicacao: Optional[date] = None
+    data_prevista: Optional[date] = None
+    lote: Optional[str] = None
+    local_aplicacao: Optional[str] = None
+    profissional: Optional[str] = None
+    observacoes: Optional[str] = None
 
 
 class HistoricoVacinalUpdate(BaseModel):
