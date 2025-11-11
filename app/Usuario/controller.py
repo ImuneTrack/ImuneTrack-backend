@@ -94,7 +94,8 @@ class UsuarioController:
 
         # Cria usuário com senha hasheada
         senha_hash = UsuarioController._hash_senha(senha)
-        usuario = Usuario(nome=nome.strip(), email=email.lower(), senha=senha_hash, is_admin=is_admin)
+        usuario = Usuario(nome=nome.strip(), email=email.lower(), senha=senha_hash,
+        is_admin=is_admin)
 
         try:
             db.add(usuario)
@@ -108,7 +109,7 @@ class UsuarioController:
                 detail="Erro ao criar usuário"
             ) from e
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code, too-many-arguments, too-many-positional-arguments
     @staticmethod
     def atualizar(
         db: Session,
@@ -159,7 +160,7 @@ class UsuarioController:
                     detail="Senha deve ter no mínimo 6 caracteres"
                 )
             usuario.senha = UsuarioController._hash_senha(senha)
-        
+
         if is_admin is not None:
             usuario.is_admin = is_admin
 

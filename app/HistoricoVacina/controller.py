@@ -1,6 +1,6 @@
 """ Controlador para operações do histórico vacinal """
 from typing import List, Optional, Dict, Any
-from datetime import date, timedelta
+from datetime import date
 from dataclasses import dataclass
 
 from sqlalchemy.orm import Session, joinedload
@@ -13,7 +13,7 @@ from app.Usuario.model import Usuario
 from app.schemas import HistoricoVacinalCreate
 from app.HistoricoVacina.email_services import email_service
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes, duplicate-code
 @dataclass
 class HistoricoVacinalData:
     """Dados para criação/atualização de histórico vacinal."""
@@ -77,7 +77,8 @@ class HistoricoVacinalController:
                 destinatario=usuario.email,
                 nome_usuario=usuario.nome,
                 vacina=vacina.nome,
-                data=(historico_data.data_aplicacao or historico_data.data_prevista).strftime("%d/%m/%Y")
+                data=(historico_data.data_aplicacao or
+                historico_data.data_prevista).strftime("%d/%m/%Y")
             )
             if sucesso:
                 print(f"✅ E-mail de confirmação enviado para {usuario.email}")

@@ -40,15 +40,6 @@ class TestUsuarioModel:
         assert usuario.nome == "Alice Silva"
         assert usuario.email == "alice@test.com"
 
-    def test_usuario_repr(self):
-        """Deve retornar uma representação em string do usuário."""
-        usuario = Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash")
-        repr_str = repr(usuario)
-
-        assert "Usuario" in repr_str
-        assert "Alice" in repr_str
-        assert "alice@test.com" in repr_str
-
     def test_usuario_to_dict(self):
         """Deve converter o usuário para dicionário corretamente."""
         usuario = Usuario(

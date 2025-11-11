@@ -1,3 +1,4 @@
+"""Módulo de serviços de e-mail."""
 import smtplib
 import os
 from email.mime.multipart import MIMEMultipart

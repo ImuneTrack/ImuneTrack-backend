@@ -2,9 +2,8 @@
 from datetime import datetime, date
 from enum import Enum
 from typing import Optional
-from app.HistoricoVacina.model import StatusDose
-
 from pydantic import BaseModel, EmailStr, Field, validator
+from app.HistoricoVacina.model import StatusDose
 
 class StatusDoseEnum(str, Enum):
     """Enum para status de doses de vacinas."""
@@ -107,8 +106,6 @@ class UsuarioCreate(UsuarioBase):
         if not any(c.isalpha() for c in v):
             raise ValueError('Senha deve conter ao menos uma letra')
         return v
-    
-    is_admin: Optional[bool] = False
 
 
 class UsuarioUpdate(BaseModel):
@@ -184,6 +181,7 @@ class HistoricoVacinalBase(BaseModel):
 
 # pylint: disable=too-few-public-methods, unnecessary-pass
 class HistoricoVacinalCreate(HistoricoVacinalBase):
+    """Schema para criação de Histórico Vacinal."""
     vacina_id: int
     numero_dose: int
     status: StatusDose = StatusDose.PENDENTE

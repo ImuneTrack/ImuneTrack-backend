@@ -38,7 +38,6 @@ class Usuario(Base):
             "email": self.email,
             "is_admin": self.is_admin
         }
-    
     @property
     def senha_hash(self):
         """Getter para a senha do usuário."""
