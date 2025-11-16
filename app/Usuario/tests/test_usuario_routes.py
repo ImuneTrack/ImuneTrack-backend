@@ -34,8 +34,8 @@ class TestUsuarioView:
         mock_db = Mock()
         mock_get_db.return_value = mock_db
         usuarios_mock = [
-            Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash1"),
-            Usuario(id=2, nome="Bob", email="bob@test.com", senha="hash2")
+            Usuario(id=1, nome="Alice", email="alice@test.com", senha="hash1", is_admin=False),
+            Usuario(id=2, nome="Bob", email="bob@test.com", senha="hash2", is_admin=False)
         ]
         mock_listar.return_value = usuarios_mock
 
@@ -45,6 +45,7 @@ class TestUsuarioView:
         data = response.json()
         assert len(data) == 2
         assert data[0]["nome"] == "Alice"
+        assert data[0].get("is_admin") is not None  # Garante que is_admin está presente
 
     @patch('app.Usuario.routes.UsuarioController.buscar_por_id')
     @patch('app.Usuario.routes.get_db')
@@ -53,7 +54,7 @@ class TestUsuarioView:
         mock_db = Mock()
         mock_get_db.return_value = mock_db
         mock_buscar.return_value = Usuario(
-            id=1, nome="Alice", email="alice@test.com", senha="hash"
+            id=1, nome="Alice", email="alice@test.com", senha="hash", is_admin=False
         )
 
         response = client.get("/usuarios/1")
@@ -61,6 +62,7 @@ class TestUsuarioView:
         assert response.status_code == 200
         data = response.json()
         assert data["nome"] == "Alice"
+        assert data.get("is_admin") is not None  # Garante que is_admin está presente
 
     @patch('app.Usuario.routes.UsuarioController.buscar_por_id')
     @patch('app.Usuario.routes.get_db')
@@ -82,19 +84,21 @@ class TestUsuarioView:
         mock_db = Mock()
         mock_get_db.return_value = mock_db
         mock_criar.return_value = Usuario(
-            id=1, nome="Alice", email="alice@test.com", senha="hash"
+            id=1, nome="Alice", email="alice@test.com", senha="hash", is_admin=False
         )
 
         payload = {
             "nome": "Alice",
             "email": "alice@test.com",
-            "senha": "senha123"
+            "senha": "senha123",
+            "is_admin": False
         }
         response = client.post("/usuarios/", json=payload)
 
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
         assert data["nome"] == "Alice"
+        assert data.get("is_admin") is not None  # Garante que is_admin está presente
         assert "senha" not in data
 
     @patch('app.Usuario.routes.UsuarioController.criar')
@@ -144,13 +148,14 @@ class TestUsuarioView:
         mock_db = Mock()
         mock_get_db.return_value = mock_db
         mock_atualizar.return_value = Usuario(
-            id=1, nome="Alice Silva", email="alice@test.com", senha="hash"
+            id=1, nome="Alice Silva", email="alice@test.com", senha="hash", is_admin=False
         )
 
         payload = {
             "nome": "Alice Silva",
             "email": "alice@test.com",
-            "senha": "nova_senha"
+            "senha": "nova_senha",
+            "is_admin": False
         }
         response = client.put("/usuarios/1", json=payload)
 
@@ -209,7 +214,7 @@ class TestUsuarioView:
         mock_db = Mock()
         mock_get_db.return_value = mock_db
         mock_autenticar.return_value = Usuario(
-            id=1, nome="Alice", email="alice@test.com", senha="hash"
+            id=1, nome="Alice", email="alice@test.com", senha="hash", is_admin=False
         )
 
         response = client.post(

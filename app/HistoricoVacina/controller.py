@@ -11,8 +11,9 @@ from app.HistoricoVacina.model import HistoricoVacinal, StatusDose
 from app.Vacina.model import Vacina
 from app.Usuario.model import Usuario
 from app.schemas import HistoricoVacinalCreate
+from app.HistoricoVacina.email_services import email_service
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes, duplicate-code
 @dataclass
 class HistoricoVacinalData:
     """Dados para criação/atualização de histórico vacinal."""
@@ -69,6 +70,21 @@ class HistoricoVacinalController:
         db.add(historico)
         db.commit()
         db.refresh(historico)
+
+    # Envia e-mail de confirmação
+        try:
+            sucesso = email_service.enviar_confirmacao_vacina(
+                destinatario=usuario.email,
+                nome_usuario=usuario.nome,
+                vacina=vacina.nome,
+                data=(historico_data.data_aplicacao or
+                historico_data.data_prevista).strftime("%d/%m/%Y")
+            )
+            if sucesso:
+                print(f"✅ E-mail de confirmação enviado para {usuario.email}")
+        except Exception as e:
+            print(f"⚠️ Falha ao enviar e-mail para {usuario.email}: {e}")
+
         return historico
 
 # pylint: disable=too-many-arguments, too-many-positional-arguments

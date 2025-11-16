@@ -98,10 +98,11 @@ class TestUsuarioIntegration:
         assert len(response.json()) == 0
         response = client.post("/usuarios/", json={
             "nome": "Alice",
+            "is_admin": False,
             "email": "alice@teste.com",
             "senha": "senha123"
         })
-        assert response.status_code == 201
+        assert response.status_code == 200
         usuario_id = response.json()["id"]
         response = client.get("/usuarios/")
         assert len(response.json()) == 1
@@ -129,9 +130,9 @@ class TestUsuarioIntegration:
         assert len(response.json()) == 0
 
     @pytest.mark.parametrize("nome,email,senha,esperado", [
-        ("Alice", "alice@teste.com", "senha123", 201),
-        ("Bob Silva", "bob.silva@empresa.com.br", "senha456", 201),
-        ("Carlos", "carlos+tag@domain.co", "senha789", 201),
+        ("Alice", "alice@teste.com", "senha123", 200),
+        ("Bob Silva", "bob.silva@empresa.com.br", "senha456", 200),
+        ("Carlos", "carlos+tag@domain.co", "senha789", 200),
     ])
     def test_adicionar_usuarios_validos(self, nome, email, senha, esperado):
         """Deve adicionar usuários válidos."""

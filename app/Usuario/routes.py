@@ -64,7 +64,8 @@ async def atualizar_usuario(
 ):
     """Atualiza os dados de um usuário existente."""
     usuario_atualizado = UsuarioController.atualizar(
-        db, usuario_id, usuario.nome, usuario.email, usuario.senha, is_admin=usuario.is_admin or False
+        db, usuario_id, usuario.nome, usuario.email, usuario.senha,
+        is_admin=usuario.is_admin or False
     )
     return usuario_atualizado
 

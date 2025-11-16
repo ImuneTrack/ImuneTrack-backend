@@ -18,6 +18,7 @@ from app.schemas import (
 )
 from app.HistoricoVacina.controller import HistoricoVacinalController
 from app.HistoricoVacina.model import StatusDose
+from app.Usuario.model import Usuario
 
 router = APIRouter(prefix="/{usuario_id}/historico", tags=["Histórico Vacinal"])
 
@@ -149,14 +150,21 @@ async def buscar_registro(
 )
 async def criar_registro(
     usuario_id: int,
-    historico: HistoricoVacinalCreate,
+    historico_data: HistoricoVacinalCreate,
     db: Session = Depends(get_db)
 ):
-    """criar registro no historico"""
+    """Cria um novo registro de histórico vacinal e envia e-mail de confirmação."""
+
+    # Verifica se o usuário existe
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    # Cria o registro no banco
     novo_registro = HistoricoVacinalController.criar_registro(
         db=db,
         usuario_id=usuario_id,
-        historico_data=historico
+        historico_data=historico_data,
     )
 
     return {
@@ -173,7 +181,7 @@ async def criar_registro(
         "profissional": novo_registro.profissional,
         "observacoes": novo_registro.observacoes,
         "created_at": novo_registro.created_at,
-        "updated_at": novo_registro.updated_at
+        "updated_at": novo_registro.updated_at,
     }
 
 
