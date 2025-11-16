@@ -1,4 +1,5 @@
 """Módulo principal da aplicação ImuneTrack."""
+import os
 import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,6 @@ from app.Usuario.routes import router as usuario_router
 from app.Vacina.routes import router as vacina_router
 from app.HistoricoVacina.routes import router as historico_router
 from app.Auth.routes import router as auth_router
-
 
 def criar_tabelas_com_retry(retries=10, delay=3):
     """Cria tabelas no banco de dados com retry caso o banco ainda não esteja pronto."""
@@ -25,25 +25,22 @@ def criar_tabelas_com_retry(retries=10, delay=3):
 
 criar_tabelas_com_retry()
 
-# Cria a aplicação FastAPI
 app = FastAPI(title="ImuneTrack API")
 
-# Rotas
-app.include_router(auth_router)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-# Adiciona CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        FRONTEND_URL,
         "http://localhost:3000",
-        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Inclui as rotas
+app.include_router(auth_router)
 app.include_router(usuario_router)
 app.include_router(vacina_router)
 app.include_router(historico_router, prefix="/usuarios")
