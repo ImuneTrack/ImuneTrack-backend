@@ -4,7 +4,7 @@ from datetime import date
 from dataclasses import dataclass
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, extract
+from sqlalchemy import and_, extract, case
 from fastapi import HTTPException, status
 
 from app.HistoricoVacina.model import HistoricoVacinal, StatusDose
@@ -120,7 +120,11 @@ class HistoricoVacinalController:
             query = query.filter(HistoricoVacinal.status == status_filtro)
 
         return query.order_by(
-            HistoricoVacinal.data_aplicacao.desc().nullslast(),
+            case(
+                (HistoricoVacinal.data_aplicacao == None, 1),
+                else_=0
+            ).asc(),
+            HistoricoVacinal.data_aplicacao.desc(),
             HistoricoVacinal.created_at.desc()
         ).all()
 
