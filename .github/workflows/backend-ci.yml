@@ -46,5 +46,8 @@ jobs:
       - name: Set environment variables
         run: echo "DATABASE_URL=mysql+pymysql://root:root@127.0.0.1:3306/imunetrack_test" >> $GITHUB_ENV
 
+      - name: Add app to PYTHONPATH
+        run: echo "PYTHONPATH=${PYTHONPATH}:$(pwd)" >> $GITHUB_ENV
+
       - name: Run pytest
         run: pytest -v
