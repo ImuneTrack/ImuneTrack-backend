@@ -1,20 +1,19 @@
-"""Módulo de serviços de e-mail."""
-import smtplib
-import os
+import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import os
+import smtplib
 from dotenv import load_dotenv
-import logging
 
-# Carrega variáveis de ambiente
 load_dotenv()
 
-# Configura logging
 logger = logging.getLogger("email_service")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 class EmailService:
     """Serviço para envio de e-mails."""
+    
+    MOCK = True  # ⚡ Ative para mock (apenas log) / False para envio real
 
     def __init__(self):
         self.host = os.getenv("EMAIL_HOST")
@@ -27,7 +26,6 @@ class EmailService:
         """Envia e-mail de confirmação de registro de vacina."""
         assunto = f"Confirmação de Registro - {vacina}"
 
-        # Corpo HTML
         html = f"""
         <html>
         <body style="font-family: Arial, sans-serif; color: #333;">
@@ -40,11 +38,17 @@ class EmailService:
         </html>
         """
 
+        # 🚀 Modo Mock: apenas log
+        if self.MOCK:
+            logger.info(f"[MOCK] E-mail para {destinatario} com assunto '{assunto}' enviado com sucesso!")
+            logger.info(f"[MOCK] Corpo do e-mail: {html}")
+            return True
+
+        # Envio real via SMTP (não funcionará no Render)
         msg = MIMEMultipart("alternative")
         msg["Subject"] = assunto
         msg["From"] = self.email_from
         msg["To"] = destinatario
-
         msg.attach(MIMEText(html, "html"))
 
         try:
