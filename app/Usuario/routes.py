@@ -45,8 +45,8 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=UsuarioResponse)
 async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
-    """Cria um novo usuário no sistema."""
-    return UsuarioController.criar(db, **usuario.dict())
+    """Cria usuário normal (site)."""
+    return UsuarioController.criar(db, **usuario.dict(), is_admin=True)
 
 
 @router.put(
