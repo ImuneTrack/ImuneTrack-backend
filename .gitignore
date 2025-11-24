@@ -42,3 +42,5 @@ docker-compose.override.yml
 *.DS_Store
 *.swp
 *.tmp
+
+test_imunetrack.db-journal
